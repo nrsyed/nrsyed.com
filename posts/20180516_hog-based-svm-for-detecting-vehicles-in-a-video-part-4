@@ -1,0 +1,122 @@
+This post is the fourth in a series on developing a HOG-based SVM with OpenCV-Python for detecting objects in a video.
+
+<a href="https://nrsyed.com/2018/05/06/hog-based-svm-for-detecting-vehicles-in-a-video-part-1/">Part 1: SVMs, HOG features, and feature extraction</a>
+<a href="https://nrsyed.com/2018/05/06/hog-based-svm-for-detecting-vehicles-in-a-video-part-2/">Part 2: Sliding window technique and heatmaps</a>
+<a href="https://nrsyed.com/2018/05/10/hog-based-svm-for-detecting-vehicles-in-a-video-part-3/">Part 3: Feature descriptor code and OpenCV vs scikit-image HOG functions</a>
+Part 4: Training the SVM classifier
+<a href="https://nrsyed.com/2018/05/19/hog-based-svm-for-detecting-vehicles-in-a-video-part-5/">Part 5: Implementing the sliding window search</a>
+<a href="https://nrsyed.com/2018/05/24/hog-based-svm-for-detecting-vehicles-in-a-video-part-6/">Part 6: Heatmaps and object identification</a>
+
+With this post, we'll continue to look at the code, which is available on <a href="https://github.com/nrsyed/svm-vehicle-detector" rel="noopener" target="_blank">Github</a>. Once again, this is the final result after all is said and done:
+
+<iframe width="800" height="450" src="https://www.youtube.com/embed/uOxkAF0iA3E" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+
+Specifically, this post will focus on extracting features from the training images to train the SVM classifier.
+
+<h2>Extracting feature vectors</h2>
+
+First, we'll extract features from the sample images and split the sample data into training, cross-validation, and test sets. The training set is what we'll use to initially train the classifier, and will consist of most of our sample data. The cross-validation set set will be used to evaluate the trained classifier. Based on the accuracy with which the classifier evaluates images in the cross-validation set, we can tune the parameters of the classifier or, as I've done in my implementation, retrain the classifier with samples from the cross-validation set that it misclassified. Finally, to get a true measure of the classifier's accuracy, we evaluate its performance on the test set. The reason for reserving a small amount of data for use in a test set is that it's data the classifier has not seen, been trained on, or been tuned for, unlike the cross-validation set. Consequently, it gives us an unbiased measure of the classifier's accuracy, ideally.
+
+Before getting started, we need sample images to work with. I used the <a href="https://github.com/udacity/CarND-Vehicle-Detection" rel="noopener" target="_blank">Udacity dataset</a> (scroll down to find links for vehicle and non-vehicle data), which contains about 8800 images of vehicles, taken from a variety of angles, and about 9000 images of non-vehicles—things like the road and objects that might be found around the road, like street signs, guardrails, etc. The Udacity dataset actually contains images taken from the <a href="http://www.gti.ssr.upm.es/data/Vehicle_database.html" rel="noopener" target="_blank">GTI</a> and <a href="http://www.cvlibs.net/datasets/kitti/eval_tracking.php" rel="noopener" target="_blank">KITTI</a> datasets, in case you're looking for more images.
+
+The functions we need can both be found in <a href="https://github.com/nrsyed/svm-vehicle-detector/blob/master/train.py" rel="noopener" target="_blank">train.py</a> in the Github project. To extract features from our sample images, we'll use the first function, named <code>processFiles()</code>, whose input signature looks like this:
+
+<pre class="line-numbers" data-start=13><code class="language-python">def processFiles(pos_dir, neg_dir, recurse=False, output_file=False,
+        output_filename=None, color_space="bgr", channels=[0, 1, 2],
+        hog_features=False, hist_features=False, spatial_features=False,
+        hog_lib="cv", size=(64,64), hog_bins=9, pix_per_cell=(8,8),
+        cells_per_block=(2,2), block_stride=None, block_norm="L1",
+        transform_sqrt=True, signed_gradient=False, hist_bins=16,
+        spatial_size=(16,16)):</code></pre>
+
+The first two arguments, <code>pos_dir</code> and <code>neg_dir</code>, specify the paths to the directories containing the positive and negative sample images, respectively. The <code>recurse</code> argument specifies whether or not to look in sub-directories within those directories for images. <code>color_space</code>, as the name implies, sets the color space to which images will be converted before feature extraction; the supported color spaces can be found later in the file on <strong>lines 71-97</strong>. Note that OpenCV's default behavior for reading and displaying images is to use the BGR color space. The <code>channels</code> argument is a list specifying the color channel indices to use. For example, <code>color_space="bgr", channels=[0, 2]</code> would indicate that we wish to use the B and R channels of the BGR representation of the image. <code>color_space="hls", channels=[1, 2]</code> would indicate that we wish to use the L and S channels of the HLS representation of the image. Beyond that, the remaining arguments will be supplied to the <a href="https://github.com/nrsyed/svm-vehicle-detector/blob/master/descriptor.py" rel="noopener" target="_blank">Descriptor</a> object, which actually extracts features from an image after it's been converted to the desired color space and channels. See the <a href="https://nrsyed.com/2018/05/10/hog-based-svm-for-detecting-vehicles-in-a-video-part-3/">previous post</a> for more information on the Descriptor class.
+
+We make use of some calls to Python's built-in <code>os</code> library to build lists of positive and negative file names from the positive and negative sample directories, respectively:
+
+<pre class="line-numbers" data-start=57><code class="language-python">    if recurse:
+        pos_files = [os.path.join(rootdir, file) for rootdir, _, files
+            in os.walk(pos_dir) for file in files]
+        neg_files = [os.path.join(rootdir, file) for rootdir, _, files
+            in os.walk(neg_dir) for file in files]
+    else:
+        pos_files = [os.path.join(pos_dir, file) for file in
+            os.listdir(pos_dir) if os.path.isfile(os.path.join(pos_dir, file))]
+        neg_files = [os.path.join(neg_dir, file) for file in
+            os.listdir(neg_dir) if os.path.isfile(os.path.join(neg_dir, file))]</code></pre>
+
+After building the file lists and parsing input arguments specifying the color space and desired channels, we iterate through the lists, load each file, convert it to the desired color space if not BGR, keep only the desired channels, get the feature vector by feeding the image to our <code>Descriptor</code> object, and append it to the appropriate list.
+
+<pre class="line-numbers" data-start=137><code class="language-python">    # Iterate through files and extract features.
+    for i, filepath in enumerate(pos_files + neg_files):
+        image = cv2.imread(filepath)
+        if cv_color_const > -1:
+            image = cv2.cvtColor(image, cv_color_const)
+
+        if len(image.shape) > 2:
+            image = image[:,:,channels]
+
+        feature_vector = descriptor.getFeatureVector(image)
+
+        if i < len(pos_files):
+            pos_features.append(feature_vector)
+        else:
+            neg_features.append(feature_vector)</code></pre>
+
+<h2>Scaling features</h2>
+
+It is very important that the features be scaled, i.e., normalized. Different types of features are not necessarily measured along the same scale—for example, how do you compare a HOG bin value from HOG features to a color histogram bin value between 0 and 255? Without scaling or normalizing our features, features with large values can overshadow features with smaller values. I've utilized scikit-learn's <a href="http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html" rel="noopener" target="_blank"><code>sklearn.preprocessing.StandardScaler</code></a>, which, for each column in our list of feature vectors (i.e., each feature), removes the mean so that all values are centered around zero and scales the variance to one, so different features can be directly compared:
+
+<pre class="line-numbers" data-start=159><code class="language-python">    # Instantiate scaler and scale features.
+    print("Scaling features.\n")
+    scaler = StandardScaler().fit(pos_features + neg_features)
+    pos_features = scaler.transform(pos_features)
+    neg_features = scaler.transform(neg_features)</code></pre>
+
+Notice how we fit the scaler to the complete set of feature vectors, then actually scale the features with <code>StandardScaler.transform()</code>. After training the classifier on these scaled features, we must remember to apply the same scaler to any feature vectors we wish to classify later.
+
+<h2>Training, cross-validation, and test sets</h2>
+
+Next, we shuffle and split our data into a training set, cross-validation set, and test set. The training set is the data on which the classifier will be initially trained. The cross-validation set will be used to evaluate the trained classifier. We can use the classifier's performance on the cross-validation set to retrain it or tune its parameters as we see fit, until we're satisfied with its performance. Finally, the classifier is evaluated on data it hasn't seen before, i.e., the test set, to quantify its ultimate accuracy.
+
+70/20/10 is a common split, i.e., putting 70% of the original data in the training set, 20% in the cross-validation set, and 10% in the test set. I ended up going with 75/20/5 based on the fact that the classifier's performance on the test set seemed to have little correlation with its performance on actual video.
+
+<h3>Training the classifier</h3>
+
+To train the classifier, we supply it with the training data and a list of "labels" to tell it which class each training example belongs to:
+
+<pre class="line-numbers" data-start=277><code class="language-python">    train_set = np.vstack((pos_train, neg_train))
+    train_labels = np.concatenate(
+        (np.ones(pos_train.shape[0],), np.zeros(neg_train.shape[0],)))
+
+    print("Training classifier...")
+    start_time = time.time()
+    classifier = svm.LinearSVC(C=C, loss=loss, penalty=penalty, dual=dual,
+        fit_intercept=fit_intercept)
+    classifier.fit(train_set, train_labels)</code></pre>
+
+In this case, the classes can simply be represented by numbers, where "1" represents a positive example (corresponding to an image that contains the object) and "0" represents a negative example (corresponding to an image that doesn't contain the object). Here, I've used scikit-learn's <a href="http://scikit-learn.org/stable/modules/generated/sklearn.svm.LinearSVC.html" rel="noopener" target="_blank"><code>sklearn.svm.LinearSVC</code></a>, which is initialized with the desired hyperparameters on <b>lines 283-284</b>. The actual training occurs on <b>line 285</b> via the <code>LinearSVC.fit()</code> method, which we supply with the training data and corresponding labels.
+
+Next, we evaluate its performance on the cross-validation set positive and negative samples:
+
+<pre class="line-numbers" data-start=288><code class="language-python">    # Run classifier on cross-validation set.
+    pos_val_predicted = classifier.predict(pos_val)
+    neg_val_predicted = classifier.predict(neg_val)</code></pre>
+
+A perfect classifier would return all 1s for the positive cross-validation samples and all 0s for the negative cross-validation samples. However, there will inevitably be misclassified samples. To improve the performance of our classifier, we specifically add the misclassified samples from the cross-validation set to the original training set, then retrain the classifier as follows:
+
+<pre class="line-numbers" data-start=310><code class="language-python">    pos_train = np.vstack((pos_train, pos_val[pos_val_predicted != 1, :]))
+    neg_train = np.vstack((neg_train, neg_val[neg_val_predicted == 1, :]))
+    train_set = np.vstack((pos_train, neg_train))
+    train_labels = np.concatenate(
+        (np.ones(pos_train.shape[0],), np.zeros(neg_train.shape[0],)))
+
+    classifier.fit(train_set, train_labels)</code></pre>
+
+The classifier is now completely trained! If we wanted to, we could have continued to tune the classifier and its hyperparameters based on its performance on the cross-validation set. Scikit-learn offers a class to facilitate this, <a href="http://scikit-learn.org/stable/modules/generated/sklearn.model_selection.GridSearchCV.html" rel="noopener" target="_blank"><code>sklearn.model_selection.GridSearchCV</code></a>. In this case, I didn't do any tuning beyond retraining with the incorrectly classified samples from the cross-validation set, since I found the SVM to attain high accuracy (often >99%) without additional tuning.
+
+To determine the final accuracy, we simply run the trained classifier on the test set:
+
+<pre class="line-numbers" data-start=318><code class="language-python">    pos_test_predicted = classifier.predict(pos_test)
+    neg_test_predicted = classifier.predict(neg_test)</code></pre>
+
+In the next post, we'll see how to utilize the trained classifier to find vehicles in a video.
