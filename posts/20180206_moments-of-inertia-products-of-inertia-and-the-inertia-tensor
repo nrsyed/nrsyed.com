@@ -1,0 +1,165 @@
+If you've studied dynamics or modeled anything involving rotational motion, you've probably come across the concept of <a href="https://en.wikipedia.org/wiki/Moment_of_inertia" rel="noopener" target="_blank">mass moment of inertia</a>, most likely in the form of the equation [latex]T = I \alpha[/latex], which relates the torque [latex]T[/latex] acting on an object to its angular acceleration [latex]\alpha[/latex] via its moment of inertia [latex]I[/latex]. In this type of problem, the torque and angular acceleration act about a single axis, and the moment of inertia implicitly refers to the moment of inertia about that same axis. The moment of inertia essentially describes an object's resistance to rotational motion in response to a torque. It is the rotational analog of mass. However, this is just a simplified case of 3D rotational motion. If you've dealt with 3D rotational motion, you've probably heard of the inertia tensor, also known as the inertia matrix, which contains the moments of inertia and products of inertia about all three axes for an object, however you choose to orient those axes. In this post, we'll see where the inertia tensor, moments of inertia, and products of inertia come from, as well as attempt to gain some intuition for what they mean.
+
+This post assumes that you're familiar with cross products, basic calculus, and matrix multiplication.
+
+<h1>Derivation</h1>
+We start with Newton's Second Law, [latex]\pmb{F} = m \pmb{a}[/latex], which should look familiar to you (we'll use <b>bold</b> letters to denote vectors and matrices). We can write Newton's Second Law a different way if we remember that acceleration is the time rate of change of velocity:
+
+[latex]\pmb{F} = m \frac{d}{dt} \pmb{v} = \frac{d}{dt} m \pmb{v}[/latex]
+<br>
+You might recognize [latex]m \pmb{v}[/latex] as the definition of <a href="https://en.wikipedia.org/wiki/Momentum">linear momentum</a>: [latex]\pmb{p} = m \pmb{v}[/latex]. In other words, the total force acting on a particle is equal to the time derivative of its linear momentum:
+
+[latex]\pmb{F} = \pmb{\dot{p}}[/latex]
+<br>
+where [latex]\pmb{p}[/latex] is linear momentum. This is for a single particle; we can extend this to any system of multiple particles or rigid bodies by summing the time derivative of the linear momentum of each particle in the system:
+
+[latex]\pmb{F} = \sum\limits_{i}^{N} \frac{d}{dt} m_i \pmb{v_i} = \sum\limits_{i}^{N} \pmb{\dot{p}_i}[/latex]
+<br>
+where there are N particles, [latex]m_i[/latex] is the mass of the <i>i</i>th particle, [latex]\pmb{v_i}[/latex] is the velocity of the <i>i</i>th particle, and [latex]\pmb{\dot{p}_i}[/latex] is the time derivative of the linear momentum of the <i>i</i>th particle. How does this relate to rotational motion? If you've taken a dynamics course, you might remember that torque is equal to distance times force. Or, in 3D, torque is equal to the cross product of position and force:
+
+[latex]\pmb{T} = \pmb{r} \times \pmb{F} = \sum\limits_{i}^{N} \pmb{r_i} \times \pmb{\dot{p}_i} = \sum\limits_{i}^{N} \pmb{r_i} \times \frac{d}{dt} m_i \pmb{v_i}[/latex]
+<br>
+In fact, it turns out that the right-hand side of the equation above is the definition of the time derivative of the angular momentum [latex]\pmb{L}[/latex]:
+
+[latex]\pmb{\dot{L}} = \sum\limits_{i}^{N} \pmb{r_i} \times \frac{d}{dt} m_i \pmb{v_i}[/latex]
+<br>
+Or, written more succinctly:
+
+<p id="equation1">[latex]\pmb{T} = \pmb{\dot{L}}[/latex] &nbsp; &nbsp; &nbsp; &nbsp;<strong>(Equation 1)</strong></p>
+<br>
+OK, so that's the time derivative of angular momentum. However, let's take a step back and consider just the angular momentum, not its time derivative:
+
+[latex]\pmb{L} = \sum\limits_{i}^{N} \pmb{r_i} \times m_i \pmb{v_i}[/latex]
+<br>
+Since the objective here is to characterize rotational motion, let's rewrite the linear velocity in terms of angular velocity, which you might remember from dynamics as the cross product of position and angular velocity: [latex]\pmb{v} = \pmb{\omega} \times \pmb{r}[/latex]:
+
+<p id="equation2">[latex]\pmb{L} = \sum\limits_{i}^{N} m_i \pmb{r_i} \times (\pmb{\omega} \times \pmb{r_i})[/latex] &nbsp; &nbsp; &nbsp; &nbsp;<strong>(Equation 2)</strong></p>
+<br>
+Note that I've moved [latex]m_i[/latex] to the beginning of the sum, since it's a scalar and cross product multiplication is distributive (i.e., it doesn't matter where we put [latex]m_i[/latex]). Also note how [latex]\pmb{\omega}[/latex] is not notated with a subscript, i.e., we didn't write [latex]\pmb{\omega_i}[/latex]. That's because we're assuming the entire system, and every particle in it, has the same angular velocity.
+
+The next step is to compute the cross products. To do this, we must remember that these are vectors. We'll consider the position vector of each particle in the system to be defined by its x, y, and z components in Cartesian coordinates: [latex]\pmb{r_i} = x \pmb{\hat{\imath}} + y \pmb{\hat{\jmath}} + z \pmb{\hat{k}}[/latex]. Similarly, the angular velocity also has x, y, and z components: [latex]\pmb{\omega} = \omega_x \pmb{\hat{\imath}} + \omega_y \pmb{\hat{\jmath}} + \omega_z \pmb{\hat{k}}[/latex]. Then, writing the <a href="https://en.wikipedia.org/wiki/Cross_product#Matrix_notation" rel="noopener" target="_blank">determinant form</a> of the cross product, we have:
+
+[latex](\pmb{\omega} \times \pmb{r_i}) =
+\begin{vmatrix} \pmb{\hat{\imath}} & \pmb{\hat{\jmath}} & \pmb{\hat{k}} \\
+\omega_x & \omega_y & \omega_z \\
+x & y & z \end{vmatrix}[/latex]
+<br>
+If we do the math, this cross product turns out to be:
+
+[latex](\pmb{\omega} \times \pmb{r_i}) =
+\begin{bmatrix} \omega_y z - \omega_z y \\
+- \omega_x z + \omega_z x \\
+\omega_x y - \omega_y x \end{bmatrix}[/latex]
+<br>
+Approaching the cross product of this with position the same way, we find:
+
+[latex]\pmb{r_i} \times (\pmb{\omega} \times \pmb{r_i}) =
+\begin{vmatrix} \pmb{\hat{\imath}} & \pmb{\hat{\jmath}} & \pmb{\hat{k}} \\
+x & y & z \\
+\omega_y z - \omega_z y & - \omega_x z + \omega_z x & \omega_x y - \omega_y x
+\end{vmatrix}[/latex]
+<br>
+Performing the multiplication and grouping like terms:
+
+<p id="equation3a">[latex]\pmb{r_i} \times (\pmb{\omega} \times \pmb{r_i}) =
+\begin{bmatrix} \omega_x (y^2 + z^2) - \omega_y xy - \omega_z xz \\
+- \omega_x xy + \omega_y (x^2 + z^2) - \omega_z yz \\
+- \omega_x xz - \omega_y yz + \omega_z (x^2 + y^2) \end{bmatrix}[/latex] &nbsp; &nbsp; &nbsp; &nbsp;<strong>(Equation 3a)</strong></p>
+<br>
+If you have experience with linear algebra, you might see that the previous equation, Equation 3a, lends itself nicely to being written as a matrix and a vector, where the vector is simply the angular velocity vector mentioned in the last paragraph:
+
+<p id="equation3b">[latex]\pmb{r_i} \times (\pmb{\omega} \times \pmb{r_i}) =
+\begin{bmatrix}(y^2 + z^2) & -xy & -xz \\
+-xy & (x^2 + z^2) & -yz \\
+-xz & -yz & (x^2 + y^2) \end{bmatrix}
+\begin{bmatrix} \omega_x \\ \omega_y \\ \omega_z \end{bmatrix}[/latex] &nbsp; &nbsp; &nbsp; &nbsp;<strong>(Equation 3b)</strong></p>
+<br>
+Having computed the cross products, let's put <a href="#equation3b">Equation 3b</a> back into <a href="#equation2">Equation 2</a>:
+
+<p id="equation4">[latex]\pmb{L} = \sum\limits_{i}^{N} m_i \pmb{r_i} \times (\pmb{\omega} \times \pmb{r_i}) = \sum\limits_{i}^{N} m_i
+\begin{bmatrix}(y^2 + z^2) & -xy & -xz \\
+-xy & (x^2 + z^2) & -yz \\
+-xz & -yz & (x^2 + y^2) \end{bmatrix}
+\begin{bmatrix} \omega_x \\ \omega_y \\ \omega_z \end{bmatrix}[/latex] &nbsp; &nbsp; &nbsp; &nbsp;<strong>(Equation 4)</strong></p>
+<br>
+In Equation 4 above, summing a matrix is the same as summing each element of the matrix. The same is true of the scalar [latex]m_i[/latex], which is multiplied with each element of the matrix:
+
+[latex]\pmb{L} = \sum\limits_{i}^{N} m_i \pmb{r_i} \times (\pmb{\omega} \times \pmb{r_i}) =
+\begin{bmatrix}\sum\limits_{i}^{N}(y^2 + z^2)m_i & \sum\limits_{i}^{N}(-xy)m_i & \sum\limits_{i}^{N}(-xz)m_i \\
+\sum\limits_{i}^{N}(-xy)m_i & \sum\limits_{i}^{N}(x^2 + z^2)m_i & \sum\limits_{i}^{N}(-yz)m_i \\
+\sum\limits_{i}^{N}(-xz)m_i & \sum\limits_{i}^{N}(-yz)m_i & \sum\limits_{i}^{N}(x^2 + y^2)m_i \end{bmatrix}
+\begin{bmatrix} \omega_x \\ \omega_y \\ \omega_z \end{bmatrix}[/latex]
+<br>
+At this point, it's important to note that a "system of particles" doesn't necessarily mean a bunch of separate particles or separate objects. Generally speaking, any rigid body or object can be thought of as a system of particles, if we think of it as being comprised of [latex]N[/latex] smaller connected pieces (or "particles"). Those of you who know your calculus probably see where I'm going with this. If we think of a rigid body as being made up of an infinite number of infinitely small pieces, i.e., [latex]N\to\infty[/latex], with each piece having a differential mass [latex]dm[/latex], the sums in the equation above simply become integrals:
+
+<p id="equation5">[latex]\pmb{L} =
+\begin{bmatrix}\int\limits_{m}(y^2 + z^2)dm & \int\limits_{m}(-xy)dm & \int\limits_{m}(-xz)dm \\
+\int\limits_{m}(-xy)dm & \int\limits_{m}(x^2 + z^2)dm & \int\limits_{m}(-yz)dm \\
+\int\limits_{m}(-xz)dm & \int\limits_{m}(-yz)dm & \int\limits_{m}(x^2 + y^2)dm \end{bmatrix}
+\begin{bmatrix} \omega_x \\ \omega_y \\ \omega_z \end{bmatrix}[/latex] &nbsp; &nbsp; &nbsp; &nbsp;<strong>(Equation 5)</strong></p>
+<br>
+This matrix is the inertia tensor, a.k.a., the inertia matrix. The diagonal elements of the matrix are termed the "moments of inertia." For convenience, the moments of inertia are abbreviated as follows:
+
+[latex]I_{xx} = \int\limits_{m}(y^2 + z^2)dm[/latex]
+<br> 
+[latex]I_{yy} = \int\limits_{m}(x^2 + z^2)dm[/latex]
+<br> 
+[latex]I_{zz} = \int\limits_{m}(x^2 + y^2)dm[/latex]
+<br>
+The off-diagonal elements of the matrix are termed the "products of inertia." Although there are six off-diagonal elements, there are only three distinct products of inertia. This is because the matrix is symmetric, i.e., [latex]I_{ij} = I_{ji}[/latex]. These products of inertia are abbreviated as follows:
+
+[latex]I_{xy} = I_{yx} = -\int\limits_{m}(xy)dm[/latex]
+<br> 
+[latex]I_{xz} = I_{zx} = -\int\limits_{m}(xz)dm[/latex]
+<br> 
+[latex]I_{yz} = I_{zy} = -\int\limits_{m}(yz)dm[/latex]
+<br>
+Rewriting the inertia tensor (inertia matrix) [latex]\pmb{I}[/latex] using these abbreviated definitions:
+
+<p id="equation6">[latex]\pmb{I} =
+\begin{bmatrix}I_{xx} & I_{xy} & I_{xz} \\
+I_{yx} & I_{yy} & I_{yz} \\
+I_{zx} & I_{zy} & I_{zz}\end{bmatrix}[/latex] &nbsp; &nbsp; &nbsp; &nbsp;<strong>(Equation 6)</strong></p>
+<br>
+Now, rewriting <a href="#equation2">Equation 2</a>, the equation for angular momentum, with the definition from Equation 6 above:
+
+<p id="equation7">[latex]\pmb{L} = \pmb{I}\pmb{\omega} =
+\begin{bmatrix}I_{xx} & I_{xy} & I_{xz} \\
+I_{yx} & I_{yy} & I_{yz} \\
+I_{zx} & I_{zy} & I_{zz}\end{bmatrix}
+\begin{bmatrix} \omega_x \\ \omega_y \\ \omega_z \end{bmatrix}[/latex] &nbsp; &nbsp; &nbsp; &nbsp;<strong>(Equation 7)</strong></p>
+<br>
+Finally, substituting Equation 7 above back into <a href="#equation1">Equation 1</a>, we come full circle:
+
+[latex]\pmb{T} = \pmb{\dot{L}} = \frac{d}{dt}\pmb{I} \pmb{\omega}[/latex]
+<br> 
+<p id="equation8">[latex]\pmb{T} = \pmb{I} \pmb{\dot{\omega}} = \pmb{I} \pmb{\alpha}[/latex] &nbsp; &nbsp; &nbsp; &nbsp;<strong>(Equation 8)</strong></p>
+<br>
+Hopefully, Equation 8 seems familiar, if you've studied dynamics. It is the rotational analog of [latex]\pmb{F} = m \pmb{a}[/latex], derived using the definition of torque, with the inertia tensor (and the moments of inertia and products of inertia therein) being obtained along the way.
+
+<h1>What is the physical significance of the moments of inertia and products of inertia?</h1>
+The math is all well and good, but what does it actually mean? Let's expand <a href="#equation8">Equation 8</a>:
+
+[latex]\pmb{T} = \pmb{I} \pmb{\alpha}[/latex]
+<br> 
+[latex]\begin{bmatrix} T_x \\ T_y \\ T_z \end{bmatrix} = 
+\begin{bmatrix}I_{xx} & I_{xy} & I_{xz} \\
+I_{yx} & I_{yy} & I_{yz} \\
+I_{zx} & I_{zy} & I_{zz}\end{bmatrix}
+\begin{bmatrix} \alpha_x \\ \alpha_y \\ \alpha_z \end{bmatrix}[/latex]
+<br>
+where [latex]\pmb{\alpha} = \alpha_x \pmb{\hat{\imath}} + \alpha_y \pmb{\hat{\jmath}} + \alpha_z \pmb{\hat{k}}[/latex] is the angular acceleration. Note how we've also split the torque into its respective components. As an example, consider the result of multiplying the first row of the inertia matrix with the angular acceleration vector:
+
+[latex]T_x = I_{xx} \alpha_x + I_{xy} \alpha_y + I_{xz} \alpha_z[/latex]
+<br>
+Essentially, the moments of inertia tell us how an object rotates about an axis when a torque is applied about that same axis, e.g., if you apply torque about the x axis, [latex]I_{xx}[/latex] tells us how that affects the angular acceleration about the x axis, based on the mass distribution of the object. The products of inertia tell us how an object rotates about an axis when a torque is applied about a <em>different axis</em>. In the example above, the product of inertia [latex]I_{xy}[/latex] tells us how a torque about the x axis affects angular acceleration about the y axis, based on the mass distribution of the object. Similarly, [latex]I_{xz}[/latex] tells us how a torque about the x axis affects angular acceleration about the z axis.
+
+With this in mind, it becomes easier to interpret the notation for a moment or product of inertia. A moment of inertia or product of inertia [latex]I_{ij}[/latex] (where [latex]i[/latex] can be x, y, or z, and [latex]j[/latex] can be x, y, or z) tells us how a torque applied to axis [latex]i[/latex] affects the angular acceleration about axis [latex]j[/latex].
+
+Because moments of inertia and products of inertia depend entirely on the mass distribution of an object relative to the axis of rotation, they can change if either a) the mass distribution changes or b) the object is rotated about a different set of xyz axes. In fact, for any object, it's possible to find a set of axes for which the mass distribution is symmetric about every axis. These are called the "principal axes," and when you compute the elements of the inertia tensor using the principal axes, the products of inertia all come out to zero:
+
+[latex]\pmb{I} = \begin{bmatrix}I_{xx} & 0 & 0 \\
+0 & I_{yy} & 0 \\
+0 & 0 & I_{zz}\end{bmatrix}[/latex] &nbsp; &nbsp; &nbsp; &nbsp;<strong>(principal axes)</strong>
+<br>
+Generally speaking, this is the case for most problems—you'll usually be dealing with rotation about axes that pass through the center of mass and about which the object is symmetric. However, when deviating from such cases, a working knowledge of the inertia tensor can be invaluable.

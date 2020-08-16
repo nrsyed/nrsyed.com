@@ -1,0 +1,164 @@
+In the <a href="https://nrsyed.com/2017/11/28/a-friendly-introduction-to-rotation-matrices/">last post</a>, we covered 2D rotation matrices, which allow us to convert coordinates from one coordinate system to another coordinate system that's rotated by some angle <i>θ</i>. Previously, we notated the original coordinate system <i>XY</i> and the rotated coordinate system <i>X'Y'</i>. In this post, we'll begin dealing with a larger number of coordinate systems. Adding a prime for each additional coordinate system would be impractical and inconvenient, so we'll use numerical subscripts to differentiate between coordinate systems, instead.
+
+<img src="https://nrsyed.com/wp-content/uploads/2017/12/translation_1.png" alt="" width="450" height="445" class="alignnone size-full wp-image-238" />
+
+Referring to the image above, the <i>X<sub>0</sub>Y<sub>0</sub></i> coordinate system is equivalent to the <i>XY</i> coordinate system from the previous post, and will generally represent the "global" coordinate system we're most interested in. The <i>X<sub>1</sub>Y<sub>1</sub></i> coordinate system is equivalent to the <i>X'Y'</i> coordinate system from the previous post, and <i>θ<sub>0</sub></i> is equivalent to <i>θ</i>. The rotation matrix to convert from the <i>X<sub>1</sub>Y<sub>1</sub></i> system to the <i>X<sub>0</sub>Y<sub>0</sub></i> would be
+
+[latex]
+[R] = \left[ \begin{matrix} cos\theta_0 & -sin\theta_0 \\
+sin\theta_0 & cos\theta_0 \end{matrix} \right]
+[/latex]
+<br>
+Converting a vector defined in the <i>X<sub>1</sub>Y<sub>1</sub></i> system to the <i>X<sub>0</sub>Y<sub>0</sub></i> system would look like this:
+
+[latex]
+\left\{ \begin{matrix} x_0 \\ y_0 \end{matrix} \right\} =
+\left[ \begin{matrix} cos\theta_0 & -sin\theta_0 \\
+sin\theta_0 & cos\theta_0 \end{matrix} \right] 
+\left\{ \begin{matrix} x_1 \\ y_1 \end{matrix} \right\}
+[/latex]
+<br>
+A Euclidean transformation matrix that can perform both rotation and translation looks similar to this, but contains an additional row and and an additional column:
+
+[latex]
+[T] = \left[ \begin{matrix} cos\theta_0 & -sin\theta_0 & 0 \\
+sin\theta_0 & cos\theta_0 & 0 \\
+0 & 0 & 1 \end{matrix} \right]
+[/latex]
+<br>
+The last column of the first row provides the translation in <i>x</i> along the <i>X<sub>0</sub></i> axis, and the last column of the second row provides the translation in <i>y</i> along the <i>Y<sub>0</sub></i> axis. For pure rotation without translation, these elements are equal to zero. The last row of the transformation matrix always contains zeros except for the final element, which is always a one. Similarly, the position vector for a point intended to be used with a transformation matrix must contain an additional dummy coordinate that's always equal to one:
+
+[latex]
+\left\{ \begin{matrix} x_0 \\ y_0 \\ 1 \end{matrix} \right\} =
+\left[ \begin{matrix} cos\theta_0 & -sin\theta_0 & 0 \\
+sin\theta_0 & cos\theta_0 & 0 \\
+0 & 0 & 1 \end{matrix} \right]
+\left\{ \begin{matrix} x_1 \\ y_1 \\ 1 \end{matrix} \right\}
+[/latex]
+<br>
+Consider an example where there <em>is</em> translation, say, for instance, some distance <i>a</i> along <i>X<sub>0</sub></i> and some distance <i>b</i> along <i>Y<sub>0</sub></i>:
+
+<img src="https://nrsyed.com/wp-content/uploads/2017/12/translation_2.png" alt="" width="450" height="448" class="alignnone size-full wp-image-239" />
+
+The equation and transformation matrix in this case would be
+
+[latex]
+\left\{ \begin{matrix} x_0 \\ y_0 \\ 1 \end{matrix} \right\} =
+\left[ \begin{matrix} cos\theta_0 & -sin\theta_0 & a \\
+sin\theta_0 & cos\theta_0 & b \\
+0 & 0 & 1 \end{matrix} \right]
+\left\{ \begin{matrix} x_1 \\ y_1 \\ 1 \end{matrix} \right\}
+[/latex]
+<br>
+If it's not apparent why this is the case, try working through the matrix multiplication to see how these additional elements affect the resulting coordinates. A simple example to consider might be
+
+[latex]
+\left\{ \begin{matrix} x_1 \\ y_1 \\ 1 \end{matrix} \right\} =
+\left\{ \begin{matrix} 0 \\ 0 \\ 1 \end{matrix} \right\}
+[/latex]
+<br>
+i.e., the origin of the second coordinate system, for which you should simply obtain <i>x<sub>0</sub> = a</i> and <i>y<sub>0</sub> = b</i>.
+
+The true value in using transformation matrices is the ability to chain together multiple transformation matrices. In other words, if you have one coordinate system that's defined in another coordinate system (by its rotation and translation relative to that other coordinate system), which, in turn, is defined in yet another coordinate system, and so on, you can  obtain the coordinates of some point in the desired coordinate system by multiplying the transformation matrices of all the intervening coordinate systems. For example, consider the following case, which contains three coordinate systems:
+
+<img src="https://nrsyed.com/wp-content/uploads/2017/12/translation_4.png" alt="" width="500" height="644" class="alignnone size-full wp-image-241" />
+
+Here, the <i>X<sub>1</sub>Y<sub>1</sub></i> system (drawn in red) is defined by its rotation and translation relative to the <i>X<sub>0</sub>Y<sub>0</sub></i> system (drawn in black), specifically:
+
+[latex]
+\left[ ^0 T_1 \right] =
+\left[ \begin{matrix} cos\theta_0 & -sin\theta_0 & a \\
+sin\theta_0 & cos\theta_0 & b \\
+0 & 0 & 1 \end{matrix} \right]
+[/latex]
+<br>
+where the notation on the left-hand side indicates that the transformation matrix is converting <em>from</em> the <i>X<sub>1</sub>Y<sub>1</sub></i> system <em>to</em> the <i>X<sub>0</sub>Y<sub>0</sub></i> system. Further, the <i>X<sub>2</sub>Y<sub>2</sub></i> system (drawn in blue) is defined by its rotation (by some angle <i>θ<sub>1</sub></i>) and translation (<i>c</i> in the <i>X<sub>1</sub></i> direction and <i>d</i> in the <i>Y<sub>1</sub></i> direction) relative to the <i>X<sub>1</sub>Y<sub>1</sub></i> system, i.e.:
+
+[latex]
+\left[ ^1 T_2 \right] =
+\left[ \begin{matrix} cos\theta_1 & -sin\theta_1 & c \\
+sin\theta_1 & cos\theta_1 & d \\
+0 & 0 & 1 \end{matrix} \right]
+[/latex]
+<br>
+To convert coordinates from the <i>X<sub>2</sub>Y<sub>2</sub></i> system to the <i>X<sub>0</sub>Y<sub>0</sub></i> system, the transformation matrices are successively multiplied:
+
+[latex]
+\left[ ^0 T_2 \right] = \left[ ^0 T_1 \right] \left[ ^1 T_2 \right]
+[/latex]
+<br>
+If it's not clear why this works, consider the following example. Let's say we have some position vector defined in the <i>X<sub>2</sub>Y<sub>2</sub></i> system, which we'll write as <b>r<sub>2</sub></b>, and we'd like to obtain its coordinates in terms of the <i>X<sub>0</sub>Y<sub>0</sub></i> system, which we'll write as <b>r<sub>0</sub></b>. This is the same as writing:
+
+[latex]
+\textbf{r}_\textbf{0} = \left[ ^0 T_1 \right] \left[ ^1 T_2 \right] \textbf{r}_\textbf{2}
+[/latex]
+<br>
+The term [latex]\left[ ^1 T_2 \right] \textbf{r}_\textbf{2}[/latex] on the right-hand side just says "convert the coordinates <b>r<sub>2</sub></b> from the <i>X<sub>2</sub>Y<sub>2</sub></i> system to the <i>X<sub>1</sub>Y<sub>1</sub></i> system," i.e., [latex]\textbf{r}_\textbf{1} = \left[ ^1 T_2 \right] \textbf{r}_\textbf{2}[/latex]. Then, to convert <b>r<sub>1</sub></b> to <b>r<sub>0</sub></b>, we multiply by [latex]\left[ ^0 T_1 \right] [/latex]. Note that the order in which we multiply the transformation matrices matters—matrix multiplication is not commutative, and multiplying them in the wrong order will affect the result.
+
+Let's look at a concrete example to attain some intuition for how to apply these concepts. Suppose we have a robot arm with two segments, each controlled by a revolute joint. At the end of the second segment is the robot arm's end effector—this end effector might be some sort of claw, manipulator, or gripper that's designed to grab things.
+
+<img src="https://nrsyed.com/wp-content/uploads/2017/12/translation_5.png" alt="" width="600" height="386" class="alignnone size-full wp-image-242" />
+
+You can liken this to a human arm, where joint 1 would be the shoulder, joint 2 would be the elbow, and the end effector would be the hand. Knowing only the length of each segment (which will always remain constant) and the angular displacement of each joint (which we might control using motors), how can we determine the position of the end effector in 2D space? In this example, joint 1 (the "shoulder joint") isn't necessarily located at the center of our primary coordinate system, but is offset by some distance in <i>X<sub>0</sub></i> and <i>Y<sub>0</sub></i>.
+
+One way to approach this is to define a coordinate system at each joint. The <i>X<sub>1</sub>Y<sub>1</sub></i> system at the first joint is offset from the <i>X<sub>0</sub>Y<sub>0</sub></i> system by an angle <i>θ<sub>0</sub></i>, a distance <i>a</i> in <i>X<sub>0</sub></i>, and a distance <i>b</i> in <i>Y<sub>0</sub></i>:
+
+<img src="https://nrsyed.com/wp-content/uploads/2017/12/translation_6.png" alt="" width="600" height="386" class="alignnone size-full wp-image-243" />
+
+where <i>θ<sub>0</sub></i> corresponds to the angular displacement of the joint, and the first segment is aligned with the <i>X<sub>1</sub></i> axis. The transformation matrix for this coordinate system is
+
+[latex]
+\left[ ^0 T_1 \right] =
+\left[ \begin{matrix} cos\theta_0 & -sin\theta_0 & a \\
+sin\theta_0 & cos\theta_0 & b \\
+0 & 0 & 1 \end{matrix} \right]
+[/latex]
+<br>
+We might then define the next coordinate system, <i>X<sub>2</sub>Y<sub>2</sub></i>, to be located at the second joint a distance <i>c</i> along the <i>X<sub>1</sub></i> axis (i.e., the first segment, or the "upper arm," is of length <i>c</i>), and offset by a rotation <i>θ<sub>1</sub></i> corresponding to the angular displacement of the second joint.
+
+<img src="https://nrsyed.com/wp-content/uploads/2017/12/translation_7.png" alt="" width="600" height="386" class="alignnone size-full wp-image-244" />
+
+The transformation matrix for this <i>X<sub>2</sub>Y<sub>2</sub></i> system, relative to the <i>X<sub>1</sub>Y<sub>1</sub></i> system, is
+
+[latex]
+\left[ ^1 T_2 \right] =
+\left[ \begin{matrix} cos\theta_1 & -sin\theta_1 & c \\
+sin\theta_1 & cos\theta_1 & 0 \\
+0 & 0 & 1 \end{matrix} \right]
+[/latex]
+<br>
+Note that the offset in <i>Y<sub>1</sub></i> is zero, since the coordinate system is positioned in line with the the "upper arm" along <i>X<sub>1</sub></i>. Finally, suppose that the length of the second segment (the "forearm"), which lies along <i>X<sub>2</sub></i>, is <i>d</i>.
+
+<img src="https://nrsyed.com/wp-content/uploads/2017/12/translation_8.png" alt="" width="600" height="386" class="alignnone size-full wp-image-245" />
+
+Then the coordinates of the end effector in the <i>X<sub>2</sub>Y<sub>2</sub></i> system, <b>r<sub>2</sub></b>, are given by
+
+[latex]
+\textbf{r}_\textbf{2} =
+\left\{ \begin{matrix} d \\ 0 \\ 1 \end{matrix} \right\}
+[/latex]
+<br>
+
+Remember that we want the coordinates of the end effector in the <i>X<sub>0</sub>Y<sub>0</sub></i> system, i.e., <b>r<sub>0</sub></b>. We obtain this by multiplying the position vector from the <i>X<sub>2</sub>Y<sub>2</sub></i> system by the transformation matrices in the correct order:
+
+[latex]
+\textbf{r}_\textbf{0} = \left[ ^0 T_1 \right] \left[ ^1 T_2 \right] \textbf{r}_\textbf{2}
+[/latex]
+<br>
+
+Or, writing the right-hand side out in full:
+
+[latex]
+\textbf{r}_\textbf{0} = 
+\left[ \begin{matrix} cos\theta_0 & -sin\theta_0 & a \\
+sin\theta_0 & cos\theta_0 & b \\
+0 & 0 & 1 \end{matrix} \right]
+\left[ \begin{matrix} cos\theta_1 & -sin\theta_1 & c \\
+sin\theta_1 & cos\theta_1 & 0 \\
+0 & 0 & 1 \end{matrix} \right]
+\left\{ \begin{matrix} d \\ 0 \\ 1 \end{matrix} \right\}
+[/latex]
+<br>
+Carrying out the matrix multiplication is left as an exercise for you, the reader.
+
+There you have it—a crash course in Euclidean transformation matrices. If some of these concepts haven't quite stuck, you may want to reread the post, working through the examples with pen and paper until you've internalized them. If you're comfortable with 2D Euclidean transformations, consider reading up on 3D Euclidean transformations, if you're not already familiar with them. These topics will likely be revisited and applied in future posts.

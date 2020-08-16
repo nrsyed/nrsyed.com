@@ -1,0 +1,79 @@
+This post continues from <a href="https://nrsyed.com/2017/12/10/inverse-kinematics-using-the-jacobian-inverse-part-1/">the previous post</a>.
+
+<h1>The Jacobian matrix</h1>
+The Jacobian matrix is effectively the gradient of a vector-valued function, which maps the rate of change of joint angles to the rate of change of the physical location of the end effector. If you're not familiar with multivariable calculus, or if your last calculus class is well in the rear-view, let's look at a simple example: a 2D line.
+
+<img src="https://nrsyed.com/wp-content/uploads/2017/12/ik_ymx.jpg" alt="" width="300" height="288" class="alignnone" />
+
+The equation of this line is <i>y = mx</i>, where <i>m</i> is the slope, i.e., rate of change, of the line. Let's say we're at a point (<i>x<sub>e</sub>, y<sub>e</sub></i>) on the line, and we know both <i>x<sub>e</sub></i> (our horizontal position) and <i>y<sub>e</sub></i> (our height, or vertical position). We also know the slope of the line, <i>m</i>. Say we'd like to move to a different vertical position, <i>y<sub>t</sub></i>—however, we don't know the horizontal coordinate <i>x<sub>t</sub></i> of our target position, i.e., we don't know how far we have to move in the x direction to achieve our desired change in the y direction. This gives us the equation:
+
+[latex]\Delta y = m \Delta x[/latex]
+<br>
+where we know everything except <i>Δx</i>. Computing <i>Δx</i> is just a matter of dividing through by <i>m</i>, i.e., multiplying by the inverse of <i>m</i>:
+
+[latex]m ^{-1} \Delta y = m ^{-1} m \Delta x[/latex]
+<br>
+which is the same as writing:
+
+[latex]\frac{1}{m} \Delta y = \frac{1}{m} m \Delta x[/latex]
+<br>
+Or, simply:
+
+[latex]\frac{1}{m} \Delta y = \Delta x[/latex]
+<br>
+The Jacobian inverse method basically does the same thing, except instead of mapping a scalar <i>Δx</i> to a scalar <i>Δy</i> via the slope <i>m</i>, it maps a vector-valued change in joint space <b>Δθ</b> to a vector-valued change in physical space <b>Δr</b> via the Jacobian matrix <b>J</b>:
+
+[latex]\Delta \pmb{r} = \pmb{J} \Delta \pmb{\theta}[/latex]
+<br>
+So, what does the Jacobian matrix actually look like? For the three-dimensional case, the Jacobian is a 3 x <i>n</i> matrix, where <i>n</i> is the number of joints:
+
+<img src="https://nrsyed.com/wp-content/uploads/2017/12/ik_jacobian.jpg" alt="" width="600" height="308" class="alignnone" />
+
+The matrix takes the partial derivative of each component of the end effector position vector with respect to each joint. In other words, each element of the matrix considers how the end effector moves if only one of the joint angles changes. For example, consider the first element (row 1, column 1) of the matrix: [latex]\frac{\partial x}{\partial \theta_1}[/latex]. This element tells us, "if we change the angle of the first joint, <i>θ<sub>1</sub></i>, while holding the angles of all the other joints constant, how does the x coordinate of the end effector change?" i.e., what is the rate of change of the end effector x coordinate with respect to <i>θ<sub>1</sub></i>? We do this for every end effector coordinate with respect to every joint. Multiplying the joint angles by this matrix sums the impact of each joint on each end effector coordinate. This is what the equation above, [latex]\Delta \pmb{r} = \pmb{J} \Delta \pmb{\theta}[/latex], does. Writing out the terms in full, as well as the result of the multiplication:
+
+<img src="https://nrsyed.com/wp-content/uploads/2017/12/ik_equation_2-1024x233.jpg" alt="" width="840" height="191" class="alignnone" />
+
+The result says that the overall change in the x coordinate of the end effector position is the sum of the rate of change of the x coordinate with respect to <i>θ<sub>1</sub></i> times the change in <i>θ<sub>1</sub></i> plus the rate of change of the x coordinate with respect to <i>θ<sub>2</sub></i> times the change in <i>θ<sub>2</sub></i>, and so on for every joint. Same thing for the y and z coordinates in the second and third rows, respectively.
+
+Another way of putting this is that we're obtaining the vector tangent to the path of the end effector for each joint, then adding them together:
+
+<img src="https://nrsyed.com/wp-content/uploads/2017/12/ik_derivatives-1024x395.jpg" alt="" width="840" height="324" class="alignnone size-large wp-image-288" />
+
+In the figure above, left, the dashed line represents the actual path of the end effector as the first joint rotates, if the other joint angles don't change. The solid line tangent to that arc represents the partial derivative of the end effector with respect to the first joint in the current orientation (at the current set of joint angles), i.e., the instantaneous rate of change in the current orientation. This corresponds to the first column of the Jacobian matrix. Similarly, the next image in the figure shows the path and the rate of change of the end effector with respect to the second joint, which corresponds to the second column of the Jacobian matrix. And so on for every joint, which, in our example, is three joints. In each case, I've drawn a vector from the joint in question to the end effector—this vector represents the radius of the arc representing the path of the end effector (i.e., the dashed line).
+
+Note that, by taking the derivative of the end effector with respect to any joint, we're linearizing the problem. For a given set of joint angles, the Jacobian gives us the instantaneous rate of change—that is, the tangent lines in the figure above. This means that, when we use the Jacobian, we're following the tangent lines—<em>not</em> the dashed lines. For small angular displacements, the tangent lines are an accurate approximation to the dashed lines, but they're inaccurate for large angular displacements (large changes in the joint angles).
+
+How do we actually determine the elements of the Jacobian matrix? One way is to get the end effector coordinates as a function of the joint angles, i.e., [latex]\pmb{r_e} = f(\pmb{\theta}) = f(\theta_1, \theta_2, ... \theta_n)[/latex], by multiplying the transformation matrices and the coordinates of the end effector in the final coordinate system, which we obtained previously, then take the partial derivative of this function with respect to each joint angle and plug in the joint angles for the current position.
+
+An alternative is to use the cross product, which may be preferable if we're constructing the Jacobian numerically. It turns out that the cross product acts as an infinitesimal rotation generator, which essentially means that we can obtain the vector rate of change of a point, like an end effector, with respect to another point, like a joint, if we know the positions of those points and if we know the axis of rotation. This is given by the following equation:
+
+[latex]\frac{\partial \pmb{r_e}}{\partial \theta_j} = \pmb{a_j} \times (\pmb{r_e - r_j})[/latex]
+<br>
+where <i>θ<sub>j</sub></i> denotes the angle of the <i>j</i>th joint, <b>r<sub>j</sub></b> denotes the position of that joint, and <b>a<sub>j</sub></b> is a unit vector representing the axis of rotation for that joint.
+
+Refer to the previous figure again. For each joint, the vector from the joint to the end effector is the quantity [latex](\pmb{r_e - r_j})[/latex]. Then, using the cross product, our definition of the Jacobian matrix can be written as:
+
+[latex]\pmb{J} = \left[ \begin{matrix} \left\{ \pmb{a_1} \times (\pmb{r_e - r_{j1}}) \right\}^T &
+\left\{ \pmb{a_2} \times (\pmb{r_e - r_{j2}}) \right\}^T &
+... & \left\{ \pmb{a_n} \times (\pmb{r_e - r_{jn}}) \right\}^T \end{matrix} \right] [/latex]
+<br>
+Further, because the robot arm in our example lies entirely in the <i>XY</i> plane, all of our joints rotate about the <i>Z</i> axis. Thus, the axis of rotation in our example is always given by the unit vector [latex]\hat{k}[/latex], which points along the <i>Z</i> axis.
+
+After constructing the Jacobian matrix, the final step of the Jacobian inverse method, as the name suggests, is to invert the Jacobian matrix. Most of the time, the Jacobian matrix will be non-square, making it non-invertible. Depending on the orientation of the joints, the matrix may also be singular, if one or more joint angles are equal to zero, which also makes it non-invertible. Therefore, the <a href="https://en.wikipedia.org/wiki/Moore%E2%80%93Penrose_inverse" rel="noopener" target="_blank">pseudoinverse</a> of the matrix is usually used. Without going into details, the pseudoinverse avoids these problems and always allows an inverse to be computed.
+
+At last, after computing the inverse, we can obtain the joint angles necessary to attain the desired change in end effector position, by multiplying the Jacobian inverse and the change in position:
+
+[latex]\pmb{J ^{-1}} \Delta \pmb{r} = \Delta \pmb{\theta}[/latex]
+<br>
+And there you have it—the Jacobian inverse method for solving the inverse kinematic problem. As mentioned above, the Jacobian provides a linear approximation to the derivative of the position of the end effector. The Jacobian changes as the joint angles change. For small changes in the joint angles, the Jacobian provides an accurate linear approximation to the motion of the end effector, but as the joint angles continue to change, this approximation becomes less accurate. Therefore, the Jacobian inverse is an iterative method. We make a small change to the joint angles, then recompute the Jacobian, and repeat until the end effector is at (or sufficiently close to) the target position.
+
+<h1>Final notes</h1>
+We've actually simplified the Jacobian here, a bit, by using a 3 x <i>n</i> Jacobian matrix, which only takes into account the x, y, and z coordinates of the end effector (hence why it has three rows). However, if we cared about the angular orientation of the end effector, we could also construct a 6 x <i>n</i> Jacobian matrix, where rows 4, 5, and 6 would represent the angular rotation of the end effector about the X, Y, and Z axes, respectively. In plain English, we would use the 6 x <i>n</i> formulation of the Jacobian if we cared not only about <em>where</em> the end effector was located in space, but also about its direction. For example, in factories where cars are assembled, there might be robot arms that spray paint parts, like car doors. In such cases, the end effector of the robot arm might be a paint nozzle that sprays the car door with the correct paint color. To make sure that the spray nozzle is aimed at the part, it wouldn't be enough just to know <em>where</em> the nozzle was located in physical space. We'd also need to know <em>which direction</em> the nozzle was pointing—after all, it wouldn't do much good if the nozzle was the right distance from the part but was pointing toward the ceiling. To achieve this, we might use a 6 x <i>n</i> Jacobian, which would take into account the axis of rotation of the end effector. Note that, if we were to do this, we'd also have to increase the size of our position vectors to include information on the angular orientation of each joint and end effector.
+
+Our setup here is also simplified because we've only considered one end effector and one stationary target. It is possible to have multiple end effectors and multiple targets, and the targets could be moving.
+
+Moreover, it's important to note that we've only considered revolute joints, which rotate, but there may also be prismatic joints, which translate. The elements of the Jacobian matrix are a little different for prismatic joints.
+
+These are all concepts that may be explored in future posts.
+
+Finally, I'm aware that this post has been fairly abstract. The next post will illustrate everything we've talked about by implementing and animating the Jacobian inverse technique in Python. In the next post, we'll also discuss (and see) some of the limitations of the Jacobian inverse.
