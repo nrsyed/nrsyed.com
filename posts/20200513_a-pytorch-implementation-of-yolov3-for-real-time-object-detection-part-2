@@ -1,0 +1,295 @@
+<strong>Link to code</strong>: <a href="https://github.com/nrsyed/pytorch-yolov3" rel="noopener noreferrer" target="_blank">https://github.com/nrsyed/pytorch-yolov3</a>
+
+<a href="https://nrsyed.com/2020/04/28/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-1/">Part 1 (Background)</a>
+Part 2 (Initializing the network)
+<a href="https://nrsyed.com/2020/06/30/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-3/">Part 3 (Inference)</a>
+
+The last post went over some of the theory behind YOLOv3. In this post, we'll dig into the code (see the link at the top of this post). The repo is set up as a Python package named <code>yolov3</code>, which can be called from the terminal with a command of the same name (<code>yolov3</code>). Usage details and examples can be found in the repo README, and we'll touch on that a bit later, but I'm going to start by focusing on the core of the code. The first thing that happens is instantiating the <code>Darknet</code> class, initializing it with the appropriate network configuration file, and loading the weights. An example of this is found in <a href="https://github.com/nrsyed/pytorch-yolov3/blob/master/yolov3/__main__.py" rel="noopener noreferrer" target="_blank">__main__.py</a>:
+
+<pre><code class="language-python">net = yolov3.Darknet(args["config"], device=device)
+net.load_weights(args["weights"])</code></pre>
+
+<h1>Defining the network</h1>
+
+Most of the magic happens in <a href="https://github.com/nrsyed/pytorch-yolov3/blob/master/yolov3/darknet.py" rel="noopener noreferrer" target="_blank">darknet.py</a>, where the <code>Darknet</code> class and its supporting functions reside. The Darknet class's <a href="https://github.com/nrsyed/pytorch-yolov3/blob/ed929c26e6d68777f89acae6feedda721cf80e00/yolov3/darknet.py#L319" rel="noopener noreferrer" target="_blank">__init__() method</a> takes two parameters—the path to the Darknet model config file and optionally the device on which to run the model (e.g., "cpu", "cuda", "cuda:0", <a href="https://pytorch.org/docs/stable/tensor_attributes.html#torch.torch.device" rel="noopener noreferrer" target="_blank">torch.device()</a>). Here are the first several lines of Darknet.__init__():
+
+<pre class="line-numbers"><code class="language-python">class Darknet(torch.nn.Module):
+    def __init__(self, config_fpath, device="cpu"):
+        """
+        Args:
+            config_path (str): Path to Darknet .cfg file.
+            device (str): Where to allocate tensors (e.g., "cpu", "cuda", etc.)
+        """
+        super().__init__()
+        self.blocks, self.net_info = parse_config(config_fpath)
+        self.modules_ = blocks2modules(
+            self.blocks, self.net_info, device=device
+        )
+        self.device = device</code></pre>
+
+Note that it subclasses <a href="https://pytorch.org/docs/stable/nn.html#torch.nn.Module" rel="noopener noreferrer" target="_blank">torch.nn.Module</a>, which gives it the methods and properties of a PyTorch module necessary for the model to work, and calls the __init__() method of this superclass. Next, we call <a href="https://github.com/nrsyed/pytorch-yolov3/blob/ed929c26e6d68777f89acae6feedda721cf80e00/yolov3/darknet.py#L125" rel="noopener noreferrer" target="_blank">parse_config(), a custom function also defined in darknet.py</a>.
+
+<pre><code class="language-python">def parse_config(fpath):
+    """
+    Parse Darknet config file and return a list of network blocks and
+    pertinent information for each block.
+
+    Args:
+        fpath (str): Path to Darknet .cfg file.
+    Returns:
+        blocks (List[dict]): List of blocks (as dicts). Each block from the
+            .cfg file is represented as a dict, e.g.:
+            {
+                'type': 'convolutional', 'batch_normalize': 1, 'filters': 32,
+                'size': 3, 'stride': 1, 'pad': 1, 'activation': 'leaky'
+            }
+        net_info (dict): Dict of info from '[net]' block of .cfg file.
+    """</code></pre>
+
+It takes a path to a Darknet config file, which contains information on the network architecture and parameters. The config file defines the network using blocks such as this one, taken from the yolov3 config file <a href="https://github.com/nrsyed/pytorch-yolov3/blob/master/models/yolov3.cfg" rel="noopener noreferrer" target="_blank">yolov3.cfg</a>:
+
+<pre><code class="language-none">[convolutional]
+batch_normalize=1
+filters=32
+size=3
+stride=1
+pad=1
+activation=leaky</code></pre>
+
+The first line of each block (each layer) contains the block type (e.g., "convolutional") in square brackets. Each subsequent line contains the parameters for the block. The parse_config() helper function reads the config file and returns a list of dicts (one for each block, i.e., one for each layer in the table from the last post) containing the relevant info needed to construct that block as a PyTorch module. The dict for the convolutional layer above would look like this:
+
+<pre><code class="language-python">{'activation': 'leaky',
+ 'batch_normalize': 1,
+ 'filters': 32,
+ 'pad': 1,
+ 'size': 3,
+ 'stride': 1,
+ 'type': 'convolutional'}</code></pre>
+
+The other block types are "shortcut," "route," "upsample," "maxpool," and "yolo." Note that the full YOLOv3 model doesn't contain any maxpool layers, but yolov3-tiny and yolov3-spp do. A shortcut block looks like this in the config file:
+
+<pre><code class="language-none">[shortcut]
+from=-3
+activation=linear</code></pre>
+
+The <code>from</code> value of -3 indicates that the output of layer n-1 (the layer before the shortcut layer) and the output of layer n-3 should be summed. The dict for this layer would look like as follows:
+
+<pre><code class="language-python">{'activation': 'linear',
+'from': -3,
+'type': 'shortcut'}</code></pre>
+
+A route block contains a <code>layers</code> field consisting of at least one integer. A few examples are shown below.
+
+<pre><code class="language-none">[route]
+layers = -4
+
+[route]
+layers = -1, 61
+
+[route]
+layers=-1,-3,-5,-6</code></pre>
+
+A route layer concatenates the outputs of the specified layers. The first example would simply bring the output of layer n-4 to the current layer unchanged. The latter example would concatenate the outputs of layer n-1 and layer 61. parse_config() turns the layer indices in the <code>layers</code> field into a list for easy consumption by subsequent functions. The <code>layers</code> field of the route blocks in the original yolov3 model contain at most two values, but there's at least one block in yolov3-spp that contains four.
+
+The full YOLOv3 model has three yolo blocks, of which an example is shown below.
+
+<pre><code class="language-none">[yolo]
+mask = 6,7,8
+anchors = 10,13,  16,30,  33,23,  30,61,  62,45,  59,119,  116,90,  156,198,  373,326
+classes=80
+num=9
+jitter=.3
+ignore_thresh = .7
+truth_thresh = 1
+random=1</code></pre>
+
+The only things we really care about here are <code>anchors</code>, which consists of width/height pairs of anchor box sizes, and the 0-indexed <code>mask</code>, which tells us which anchor boxes this yolo layer will make predictions for (in this case, <code>116,90</code>, <code>156,198</code>, and <code>373,326</code>). <code>classes</code> indicates the number of classes on which the model was trained and <code>num</code> simply indicates the number of anchors, but we don't really need these pieces of information—the number of classes can be introspected later from the shape of the input tensor and the number of anchors can be determined from the <code>anchors</code> field. The rest of the parameters are for training and irrelevant to inference. Descriptions of all block parameters can be found on <a href="https://github.com/AlexeyAB/darknet/wiki/CFG-Parameters-in-the-different-layers" rel="noopener noreferrer" target="_blank">Alexey Bochkovskiy's Darknet fork</a>. parse_config() turns the <code>anchors</code> field values into a list of lists and the <code>mask</code> indices into a list for convenience:
+
+<pre><code class="language-python">{'anchors': [[10, 13],
+             [16, 30],
+             [33, 23],
+             [30, 61],
+             [62, 45],
+             [59, 119],
+             [116, 90],
+             [156, 198],
+             [373, 326]],
+ 'classes': 80,
+ 'ignore_thresh': 0.7,
+ 'jitter': 0.3,
+ 'mask': [6, 7, 8],
+ 'num': 9,
+ 'random': 1,
+ 'truth_thresh': 1,
+ 'type': 'yolo'}</code></pre>
+
+There's also a special "net" block at the beginning of the config file:
+
+<pre id="net-block"><code class="language-none">[net]
+# Testing
+# batch=1
+# subdivisions=1
+# Training
+batch=64
+subdivisions=16
+width=608
+height=608
+
+...</code></pre>
+
+All of its fields except <code>width</code> and <code>height</code> are irrelevant for inference, since the anchor box dimensions are relative to this width and height. parse_config() returns this "net info" separate from the list of blocks, as the function's docstring indicates:
+
+Let's return to Darknet.__init__(), which takes the return values from parse_config(), stores them as instance variables, and plugs them into another helper function named blocks2modules():
+
+<pre class="line-numbers" data-start=9><code class="language-python">        self.blocks, self.net_info = parse_config(config_fpath)
+        self.modules_ = blocks2modules(
+            self.blocks, self.net_info, device=device
+        )
+        self.device = device</code></pre>
+
+Note that I've named the instance variable that captures the return value <code>self.modules_</code> (with an underscore at the end) to avoid conflict with the instance attribute <code>self.modules</code>, which is a method inherited from torch.nn.Module that returns a generator of PyTorch modules contained in the instance. blocks2modules() translates the list of blocks into a list of PyTorch modules. Each module (layer) is implemented as a <a href="https://pytorch.org/docs/stable/nn.html#torch.nn.Sequential" rel="noopener noreferrer" target="_blank">torch.nn.Sequential</a> container, as a given module can consist of multiple sub-modules (e.g., a convolutional block consists of a 2D convolutional layer, a batch normalization layer if specified by the config file, and an activation layer).
+
+Route and shortcut blocks, which utilize the output from other layers, are handled by adding a dummy layer to the module list. The actual logic for these layers is handled in the Darknet.forward() method. This way, the structure of the PyTorch module list (and the indices of modules within the list) continue to match that of the block list, simplifying things. The dummy layer is literally just an empty class, which is also defined in darknet.py:
+
+<pre><code class="language-python">class DummyLayer(torch.nn.Module):
+    def __init__(self):
+        """
+        Empty dummy layer to serve as placeholder for shortcut and route
+        layers, which provide connections to previous layers. Actual logic
+        is handled in Darknet.forward().
+        """
+        super().__init__()</code></pre>
+
+I've implemented maxpool blocks (which are present in yolov3-tiny and yolov3-spp but not in yolov3) with a custom monkey-patched MaxPool2d class also defined in darknet.py, which looks like this:
+
+<pre><code class="language-python">class MaxPool2d(torch.nn.MaxPool2d):
+    """
+    Monkey-patched MaxPool2d class to replicate "same" padding; refer to
+    https://github.com/eriklindernoren/PyTorch-YOLOv3/pull/48/files#diff-f219bfe69e6ed201e4bdfdb371dc0c9bR49
+    """
+    def forward(self, input_):
+        if self.kernel_size > 1 and self.stride == 1:
+            padding = self.kernel_size - 1
+            zero_pad = torch.nn.ZeroPad2d((0, padding, 0, padding))
+            input_ = zero_pad(input_)
+        return F.max_pool2d(
+            input_, self.kernel_size, self.stride, self.padding,
+            self.dilation, self.ceil_mode, self.return_indices
+        )</code></pre>
+
+As the docstring indicates, unlike the original Darknet max pooling implementation, the PyTorch implementation of <a href="https://pytorch.org/docs/stable/nn.html#torch.nn.MaxPool2d" rel="noopener noreferrer" target="_blank">torch.nn.MaxPool2d</a> doesn't allow for "same" padding functionality (at least as of PyTorch 1.4). Same padding refers to padding the input tensor such that the output has the same shape as the original input. The monkey-patched class above, which subclasses torch.nn.MaxPool2d, zero pads the right and bottom edges of the input via torch.nn.ZeroPad2d if certain conditions are fulfilled before performing max pooling.
+
+Lastly, there are yolo blocks, for which we use the custom YOLOLayer class also defined in darknet.py. The YOLO classification layer of a network transforms the output tensor into predicted bounding boxes. This is a somewhat involved process, so we'll come back to it later when examining Darknet.forward(). For now, let's continue with the rest of Darknet.__init__().
+
+<pre class="line-numbers" data-start=10><code class="language-python">        self.modules_ = blocks2modules(
+            self.blocks, self.net_info, device=device
+        )
+        self.device = device
+
+        # Determine the indices of the layers that will have to be cached
+        # for route and shortcut connections.
+        self.blocks_to_cache = set()
+        for i, block in enumerate(self.blocks):
+            if block["type"] == "route":
+                # Replace negative values with absolute block index.
+                for j, block_idx in enumerate(block["layers"]):
+                    if block_idx < 0:
+                        block["layers"][j] = i + block_idx
+                        self.blocks_to_cache.add(i + block_idx)
+                    else:
+                        self.blocks_to_cache.add(block_idx)
+            elif block["type"] == "shortcut":
+                # "shortcut" layer concatenates the feature map from the
+                # previous block with the feature map specified by the shortcut
+                # block's "from" field (which is a negative integer/offset).
+                self.blocks_to_cache.add(i - 1)
+                self.blocks_to_cache.add(i + block["from"])</code></pre>
+
+Because shortcut and route layers involve outputs from previous layers, we need to cache the outputs of those previous layers. The easy way to do this is to simply cache the output of every layer in Darknet.forward(), but that seems wasteful and unnecessary, so instead I've opted to determine which layers need to be cached and only cache those. This is done by iterating through the blocks and adding the indices of the layers specified by the route and shortcut blocks to a set, as demonstrated in the code above.
+
+<h1>Loading the weights</h1>
+
+Finally, let's return to the original two lines in __main__.py at the beginning of this post:
+
+<pre><code class="language-python">net = yolov3.Darknet(args["config"], device=device)
+net.load_weights(args["weights"])</code></pre>
+
+The second line of this snippet calls <a href="https://github.com/nrsyed/pytorch-yolov3/blob/ed929c26e6d68777f89acae6feedda721cf80e00/yolov3/darknet.py#L407" rel="noopener noreferrer" target="_blank">Darknet.load_weights()</a>. To write this method, I largely drew upon <a href="https://blog.paperspace.com/how-to-implement-a-yolo-v3-object-detector-from-scratch-in-pytorch-part-3/#understandingtheweightsfile" rel="noopener noreferrer" target="_blank">Ayoosh Kathuria's own blog post on implementing YOLOv3 in PyTorch</a>.
+
+To start, the method loads the weights and stores the first several bytes, which form the header for the weights file.
+
+<pre><code class="language-python">    def load_weights(self, weights_path):
+        """
+        Args:
+            weights_path (str): Path to Darknet .weights file.
+        """
+        with open(weights_path, "rb") as f:
+            header = np.fromfile(f, dtype=np.int32, count=5)
+            self.header = header
+            weights = np.fromfile(f, dtype=np.float32)</code></pre>
+
+The header is irrelevant to inference, but information on the values it comprises can be found <a href="https://github.com/AlexeyAB/darknet/issues/2914#issuecomment-496675346" rel="noopener noreferrer" target="_blank">here</a>. The rest of the method iterates through the FP32 weight values using the <code>blocks</code> structure derived above as a reference, since only convolutional blocks have weights associated with them.
+
+<pre><code class="language-python">            # Index (pointer) to position in weights array.
+            p = 0
+
+            for block, module in zip(self.blocks, self.modules_):
+                # Only "convolutional" blocks have weights.
+                if block["type"] == "convolutional":
+                    conv = module[0]</code></pre>
+
+Referring back to the blocks2modules() function, we see that a convolutional block consists of a convolutional layer, a batch normalization layer <em>if one was specified in the config</em>, and finally an activation layer, in that order—hence the line <code>conv = module[0]</code>, which grabs the first layer of the block, i.e., the convolutional layer. The weights for a convolutional block with a batch normalization layer are stored in the following order: batch norm biases, batch norm weights, batch norm mean, batch norm variance, and finally the convolutional layer weights (there are no convolutional biases). The weights for a convolutional block without a batch normalization layer simply store the convolutional layer biases followed by the convolutional layer weights. The rest of the method utilizes this to correctly load the weights.
+
+<pre><code class="language-python">                    if "batch_normalize" in block and block["batch_normalize"]:
+                        # Convolutional blocks with batch norm have weights
+                        # stored in the following order: bn biases, bn weights,
+                        # bn running mean, bn running var, conv weights.
+
+                        bn = module[1]
+                        bn_len = bn.bias.numel()
+
+                        bn_biases = torch.from_numpy(weights[p:p+bn_len])
+                        bn.bias.data.copy_(bn_biases.view_as(bn.bias.data))
+                        p += bn_len
+
+                        bn_weights = torch.from_numpy(weights[p:p+bn_len])
+                        bn.weight.data.copy_(
+                            bn_weights.view_as(bn.weight.data)
+                        )
+                        p += bn_len
+
+                        bn_running_mean = torch.from_numpy(weights[p:p+bn_len])
+                        bn.running_mean.copy_(
+                            bn_running_mean.view_as(bn.running_mean)
+                        )
+                        p += bn_len
+
+                        bn_running_var = torch.from_numpy(weights[p:p+bn_len])
+                        bn.running_var.copy_(
+                            bn_running_var.view_as(bn.running_var)
+                        )
+                        p += bn_len
+
+                    else:
+                        # Convolutional blocks without batch norm store weights
+                        # in the following order: conv biases, conv weights.
+                        num_conv_biases = conv.bias.numel()
+                        conv_biases = torch.from_numpy(
+                            weights[p:p+num_conv_biases]
+                        )
+                        conv.bias.data.copy_(
+                            conv_biases.view_as(conv.bias.data)
+                        )
+                        p += num_conv_biases
+
+                    num_weights = conv.weight.numel()
+                    conv_weights = torch.from_numpy(weights[p:p+num_weights])
+                    conv.weight.data.copy_(
+                        conv_weights.view_as(conv.weight.data)
+                    )
+                    p += num_weights</code></pre>
+
+We simply go block by block until all weights have been loaded.
+
+<h1>Summary</h1>
+In this post, we've followed all the code responsible for constructing the network from a Darknet config file and loading the model weights. The next post will examine the code for inference and making predictions on images and video.

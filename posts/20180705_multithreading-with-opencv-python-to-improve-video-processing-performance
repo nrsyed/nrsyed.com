@@ -1,0 +1,240 @@
+Video processing can be a computationally intensive task, and since computing power is often at a premium, the more we can speed up a video processing pipeline, the better. This is especially true for applications that require real-time processing, like processing a video stream from a webcam. While it's important that the image processing portion of a video processing pipeline be streamlined, input/output (I/O) operations also tend to be a major bottleneck. One way to alleviate this is to split the computational load between multiple threads. It's important to note that, in Python, there exists something called the <em>global interpreter lock (GIL)</em>, which prevents multiple threads from accessing the same object. However, as the <a href="https://wiki.python.org/moin/GlobalInterpreterLock" rel="noopener" target="_blank">Python Wiki</a> tells us:
+
+<blockquote>...potentially blocking or long-running operations, such as I/O, image processing, and NumPy number crunching, happen outside the GIL. Therefore it is only in multithreaded programs that spend a lot of time inside the GIL ... that the GIL becomes a bottleneck.</blockquote>
+
+In other words, blocking I/O operations (which "block" the execution of later code until the current code executes), like reading or displaying video frames, are ripe for multithreaded execution. In this post, we'll examine the effect of putting calls to <code>cv2.VideoCapture.read()</code> and <code>cv2.imshow()</code> in their own dedicated threads.
+
+All the code used in this post <a href="https://github.com/nrsyed/computer-vision/tree/master/multithread" rel="noopener" target="_blank">can be found on Github</a>.
+
+<h1>Measuring changes in performance</h1>
+First, we must define "performance" and how we intend to evaluate it. In a single-threaded video processing application, we might have the main thread execute the following tasks in an infinitely looping while loop: 1) get a frame from the webcam or video file with <code>cv2.VideoCapture.read()</code>, 2) process the frame as we need, and 3) display the processed frame on the screen with a call to <code>cv2.imshow()</code>. By moving the reading and display operations to other threads, each iteration of the while loop should take less time to execute. Consequently, we'll define our performance metric as the number of iterations of the while loop in the main thread executed per second.
+
+To measure iterations of the main while loop executing per second, we'll create a class and call it <code>CountsPerSec</code>, <a href="https://github.com/nrsyed/computer-vision/blob/master/multithread/CountsPerSec.py" rel="noopener" target="_blank">which can be found on Github</a>.
+
+<pre class="line-numbers"><code class="language-python">from datetime import datetime
+
+class CountsPerSec:
+    """
+    Class that tracks the number of occurrences ("counts") of an
+    arbitrary event and returns the frequency in occurrences
+    (counts) per second. The caller must increment the count.
+    """
+
+    def __init__(self):
+        self._start_time = None
+        self._num_occurrences = 0
+
+    def start(self):
+        self._start_time = datetime.now()
+        return self
+
+    def increment(self):
+        self._num_occurrences += 1
+
+    def countsPerSec(self):
+        elapsed_time = (datetime.now() - self._start_time).total_seconds()
+        return self._num_occurrences / elapsed_time</code></pre>
+
+We import the <code>datetime</code> module to track the elapsed time. At the end of each iteration of the while loop, we'll call <code>increment()</code> to increment the count. During each iteration, we'll obtain the average <em>iterations per second</em> for the video with a call to the <code>countsPerSec()</code> method.
+
+<h1>Performance without multithreading</h1>
+Before examining the impact of multithreading, let's look at performance without it. Create a file named <code>thread_demo.py</code>, or <a href="https://github.com/nrsyed/computer-vision/blob/master/multithread/thread_demo.py" rel="noopener" target="_blank">grab it on Github and follow along</a>.
+
+<pre class="line-numbers"><code class="language-python">import argparse
+import cv2
+from CountsPerSec import CountsPerSec
+from VideoGet import VideoGet
+from VideoShow import VideoShow
+
+def putIterationsPerSec(frame, iterations_per_sec):
+    """
+    Add iterations per second text to lower-left corner of a frame.
+    """
+
+    cv2.putText(frame, "{:.0f} iterations/sec".format(iterations_per_sec),
+        (10, 450), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (255, 255, 255))
+    return frame</code></pre>
+
+We begin with some imports, including the <code>CountsPerSec</code> class we made above. We haven't covered the <code>VideoGet</code> and <code>VideoShow</code> classes yet, but these will be used to execute the tasks of getting video frames and showing video frames, respectively, in their own threads. The function <code>putIterationsPerSec()</code> overlays text indicating the frequency of the main while loop, in iterations per second, to a frame before displaying the frame. It accepts as arguments the frame (a numpy array) and the iterations per second (a float), overlays the value as text via <code>cv2.putText()</code>, and returns the modified frame.
+
+Next, we'll define a function, <code>noThreading()</code>, to get frames, compute and overlay the iterations per second value on each frame, and display the frame.
+
+<pre class="line-numbers" data-start=16><code class="language-python">def noThreading(source=0):
+    """Grab and show video frames without multithreading."""
+
+    cap = cv2.VideoCapture(source)
+    cps = CountsPerSec().start()
+
+    while True:
+        (grabbed, frame) = cap.read()
+        if not grabbed or cv2.waitKey(1) == ord("q"):
+            break
+
+        frame = putIterationsPerSec(frame, cps.countsPerSec())
+        cv2.imshow("Video", frame)
+        cps.increment()</code></pre>
+
+The function takes the video source as its only argument. If given an integer, <code>source</code> indicates that the video source is a webcam. 0 refers to the first webcam, 1 would refer to a second connected webcam, and so on. If a string is provided, it's interpreted as the path to a video file. On <b>lines 19-20</b>, we create an OpenCV <code>VideoCapture</code> object to grab and decode frames from the webcam or video file, as well as a <code>CountsPerSec</code> object to track the main while loop's performance. <b>Line 22</b> begins the main while loop. On <b>line 23</b>, we utilize the <code>VideoCapture</code> object's <code>read()</code> method to get and decode the next frame of the video stream; it returns a boolean, <code>grabbed</code>, indicating whether or not the frame was successfully grabbed and decoded, as well as the frame itself in the form of a numpy array, <code>frame</code>. On <b>line 24</b>, we check if the frame was not successfully grabbed or if the user pressed the "q" key to quit and exit the program. In either case, we halt execution of the while loop with <code>break</code>. Barring either condition, we continue by simultaneously obtaining and overlaying the current "speed" of the loop (in iterations per second) in the lower-left corner of the frame on <b>line 27</b>. Finally, the frame is displayed on the screen on <b>line 28</b> with a call to <code>cv2.imshow()</code>, and the iteration count is incremented on <b>line 29</b>.
+
+What do the results look like for both a webcam and a video file? These are the values I got on my hardware:
+
+<img src="https://nrsyed.com/wp-content/uploads/2018/07/no_thread.jpg" alt="Webcam and video file without multithreading" width="1054" height="423" class="alignleft size-full wp-image-691" />
+
+Reading from a webcam, the while loop executed about 28 iterations/second. Reading from an AVI file, about 240 iterations/second. These will serve as our baseline values.
+
+<h1>A separate thread for getting video frames</h1>
+What happens if we move the task of getting frames from the webcam or video file into a separate thread? To do this, we'll first define a class called <code>VideoGet</code> in a file named <code>VideoGet.py</code>, <a href="https://github.com/nrsyed/computer-vision/blob/master/multithread/VideoGet.py" rel="noopener" target="_blank">which can be found on Github</a>.
+
+<pre class="line-numbers"><code class="language-python">from threading import Thread
+import cv2
+
+class VideoGet:
+    """
+    Class that continuously gets frames from a VideoCapture object
+    with a dedicated thread.
+    """
+
+    def __init__(self, src=0):
+        self.stream = cv2.VideoCapture(src)
+        (self.grabbed, self.frame) = self.stream.read()
+        self.stopped = False</code></pre>
+
+We import the <code>threading</code> module, which will allow us to spawn new threads. In the class <code>__init__()</code> method, we initialize an OpenCV <code>VideoCapture</code> object and read the first frame. We also create an attribute called <code>stopped</code> to act as a flag, indicating that the thread should stop grabbing new frames.
+
+<pre class="line-numbers" data-start=15><code class="language-python">    def start(self):    
+        Thread(target=self.get, args=()).start()
+        return self
+
+    def get(self):
+        while not self.stopped:
+            if not self.grabbed:
+                self.stop()
+            else:
+                (self.grabbed, self.frame) = self.stream.read()
+
+    def stop(self):
+        self.stopped = True</code></pre>
+
+The <code>start()</code> method creates and starts the thread on <b>line 16</b>. The thread executes the <code>get()</code> function, defined on <b>line 19</b>. This function continuously runs a while loop that reads a frame from the video stream and stores it in the class instance's <code>frame</code> attribute, as long as the <code>stopped</code> flag isn't set. If a frame is not successfully read (which might happen if the webcam is disconnected or the end of the video file is reached), the <code>stopped</code> flag is set True by calling the <code>stop()</code> function, defined on <b>line 26</b>.
+
+We're now ready to implement this class. Returning to the file <a href="https://github.com/nrsyed/computer-vision/blob/master/multithread/thread_demo.py" rel="noopener" target="_blank"><code>thread_demo.py</code></a>, we define a function <code>threadVideoGet()</code>, which will use the <code>VideoGet</code> object above to read video frames in a separate thread while the main thread displays the frames.
+
+<pre class="line-numbers" data-start=31><code class="language-python">def threadVideoGet(source=0):
+    """
+    Dedicated thread for grabbing video frames with VideoGet object.
+    Main thread shows video frames.
+    """
+
+    video_getter = VideoGet(source).start()
+    cps = CountsPerSec().start()
+
+    while True:
+        if (cv2.waitKey(1) == ord("q")) or video_getter.stopped:
+            video_getter.stop()
+            break
+
+        frame = video_getter.frame
+        frame = putIterationsPerSec(frame, cps.countsPerSec())
+        cv2.imshow("Video", frame)
+        cps.increment()</code></pre>
+
+The function is pretty similar to the <code>noThreading()</code> function discussed in the previous section, except we initialize the <code>VideoGet</code> object and start the second thread on <b>line 37</b>. On <b>lines 41-43</b> of the main while loop, we check to see if the user has pressed the "q" key or if the <code>VideoGet</code> object's <code>stopped</code> attribute has been set True, in which case we halt the while loop. Otherwise, the loop gets the frame currently stored in the <code>VideoGet</code> object on <b>line 45</b>, then proceeds to process and display it as in the <code>noThreading()</code> function.
+
+How does the function perform on a webcam video stream and on a video file?
+
+<img src="https://nrsyed.com/wp-content/uploads/2018/07/thread_get.jpg" alt="Webcam and video file performance with video read in a separate thread." width="1048" height="455" class="alignleft size-full wp-image-692" />
+
+Quite the difference compared to the single-thread case! With the frame-getting task in a separate thread, the while loop executed 545 iterations/second for a webcam and 585 iterations/second for a video file. At this point, it's important to note that these values <em>do not</em> correspond to framerate or FPS. The video FPS is largely limited by the camera hardware and/or the speed with which each frame can be grabbed and decoded. The iterations per second simply show that the main while loop is able to execute more quickly when some of the video I/O is off-loaded to another thread. It demonstrates that the main thread can do more processing when it isn't also responsible for reading frames.
+
+<h1>A separate thread for showing video frames</h1>
+To move the task of displaying video frames to a separate thread, we follow a procedure similar to the last section and define a class called <code>VideoShow</code> in a file named <code>VideoShow.py</code>, which, as before, <a href="https://github.com/nrsyed/computer-vision/blob/master/multithread/VideoShow.py" rel="noopener" target="_blank">can be found on Github</a>. The class definition begins just like the <code>VideoGet</code> class:
+
+<pre class="line-numbers"><code class="language-python">from threading import Thread
+import cv2
+
+class VideoShow:
+    """
+    Class that continuously shows a frame using a dedicated thread.
+    """
+
+    def __init__(self, frame=None):
+        self.frame = frame
+        self.stopped = False</code></pre>
+<br> 
+This time, the new thread calls the <code>show()</code> method, defined on <b>line 17</b>.
+
+<pre class="line-numbers" data-start=13><code class="language-python">    def start(self):
+        Thread(target=self.show, args=()).start()
+        return self
+
+    def show(self):
+        while not self.stopped:
+            cv2.imshow("Video", self.frame)
+            if cv2.waitKey(1) == ord("q"):
+                self.stopped = True
+
+    def stop(self):
+        self.stopped = True</code></pre>
+
+Note that checking for user input, on <b>line 20</b>, is achieved in the separate thread instead of the main thread, since the OpenCV <code>waitKey()</code> function doesn't necessarily play well in multithreaded applications and I found it didn't work properly when placed in the main thread. Once again, returning to <a href="https://github.com/nrsyed/computer-vision/blob/master/multithread/thread_demo.py" rel="noopener" target="_blank"><code>thread_demo.py</code></a>, we define a function called <code>threadVideoShow()</code>.
+
+<pre class="line-numbers" data-start=50><code class="language-python">def threadVideoShow(source=0):
+    """
+    Dedicated thread for showing video frames with VideoShow object.
+    Main thread grabs video frames.
+    """
+
+    cap = cv2.VideoCapture(source)
+    (grabbed, frame) = cap.read()
+    video_shower = VideoShow(frame).start()
+    cps = CountsPerSec().start()
+
+    while True:
+        (grabbed, frame) = cap.read()
+        if not grabbed or video_shower.stopped:
+            video_shower.stop()
+            break
+
+        frame = putIterationsPerSec(frame, cps.countsPerSec())
+        video_shower.frame = frame
+        cps.increment()</code></pre>
+
+As before, this function is similar to the <code>noThreading()</code> function, except we initialize a <code>VideoShow</code> object, which I've named <code>video_shower</code> (that's "shower" as in "something that shows," not "shower" as in "water and shampoo") and start the new thread on <b>line 58</b>. <b>Line 63</b> checks indirectly if the user has pressed "q" to quit the program, since the <code>VideoShow</code> object is actually checking for user input and setting its <code>stopped</code> attribute to True in the event that the user presses "q". <b>Line 68</b> sets the <code>VideoShow</code> object's <code>frame</code> attribute to the current frame.
+
+And the result?
+
+<img src="https://nrsyed.com/wp-content/uploads/2018/07/thread_show.jpg" alt="Webcam and video file performance with video display in a separate thread" width="1048" height="455" class="alignleft size-full wp-image-693" />
+
+This is interesting. The webcam performs at 30 iterations/second, only slightly faster than the 28 obtained in the case of a single thread. However, the video file performs at ~400 iterations/second—faster than its single-thread counterpart (240 iterations/second) but slower than the video file with video reading in a separate thread (585 iterations/second). This suggests that there's a fundamental difference between reading from a camera stream and from a file, and that the primary bottleneck for a camera stream is reading and decoding video frames.
+
+<h1>Separate threads for both getting and showing video frames</h1>
+Finally, we'll implement a function named <code>threadBoth()</code> in <code>thread_demo.py</code> that creates a thread for getting video frames via the <code>VideoGet</code> class and another thread for displaying frames via the <code>VideoShow</code> class, with the main thread existing to process and pass frames between the two objects.
+
+<pre class="line-numbers" data-start=71><code class="language-python">def threadBoth(source=0):
+    """
+    Dedicated thread for grabbing video frames with VideoGet object.
+    Dedicated thread for showing video frames with VideoShow object.
+    Main thread serves only to pass frames between VideoGet and
+    VideoShow objects/threads.
+    """
+
+    video_getter = VideoGet(source).start()
+    video_shower = VideoShow(video_getter.frame).start()
+    cps = CountsPerSec().start()
+
+    while True:
+        if video_getter.stopped or video_shower.stopped:
+            video_shower.stop()
+            video_getter.stop()
+            break
+
+        frame = video_getter.frame
+        frame = putIterationsPerSec(frame, cps.countsPerSec())
+        video_shower.frame = frame
+        cps.increment()</code></pre>
+
+This function is a mixture of the <code>threadVideoGet()</code> and <code>threadVideoShow()</code> functions, which turns out to have a very interesting result:
+
+<img src="https://nrsyed.com/wp-content/uploads/2018/07/thread_both.jpg" alt="Webcam and video file with both video read and video display in separate threads." width="1042" height="453" class="alignleft size-full wp-image-694" />
+
+This seems to be at odds with the previous conclusion, which suggested that reading frames was the primary bottleneck for the webcam. For whatever reason, the combination of putting both frame-reading and frame-display in dedicated threads bumps the performance in both cases up to a whopping ~48000 iterations/second. Not being as well-versed in multithreading as I'd like to be, I can't quite explain this result. Regardless, it appears fairly clear that using multithreading for video I/O can free up considerable resources for performing other image processing tasks.
