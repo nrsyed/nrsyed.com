@@ -4,6 +4,7 @@
 <a href="https://nrsyed.com/2020/05/13/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-2/">Part 2 (Initializing the network)</a>
 <a href="https://nrsyed.com/2020/06/30/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-3/">Part 3 (Inference)</a>
 Part 4 (Real-time multithreaded detection)
+<a href="https://nrsyed.com/2020/09/20/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-5/">Part 5 (Command-line interface)</a>
 
 In this post, we extend the inference code discussed in the last post and demonstrate how to incorporate it into a multithreaded pipeline to perform detection and display the results in real time on a webcam stream or video. The functions and classes we'll use to do so are also found in <a href="https://github.com/nrsyed/pytorch-yolov3/blob/master/yolov3/inference.py" rel="noopener noreferrer" target="_blank">inference.py</a>.
 

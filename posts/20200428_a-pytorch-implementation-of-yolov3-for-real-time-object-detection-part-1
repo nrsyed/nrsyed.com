@@ -3,6 +3,8 @@
 Part 1 (Background)
 <a href="https://nrsyed.com/2020/05/13/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-2/">Part 2 (Initializing the network)</a>
 <a href="https://nrsyed.com/2020/06/30/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-3/">Part 3 (Inference)</a>
+<a href="https://nrsyed.com/2020/09/11/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-4/">Part 4 (Real-time multithreaded detection)</a>
+<a href="https://nrsyed.com/2020/09/20/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-5/">Part 5 (Command-line interface)</a>
 
 <a href="https://pjreddie.com/darknet/yolo/" rel="noopener noreferrer" target="_blank">YOLOv3</a>, the third iteration of Joseph Redmon et al's YOLO ("You Only Look Once") <a href="https://pjreddie.com/darknet/" rel="noopener noreferrer" target="_blank">Darknet-based</a> object detection neural network architecture, was developed and published in 2018 (<a href="https://arxiv.org/abs/1804.02767" rel="noopener noreferrer" target="_blank">link to paper</a>). The defining characteristic of YOLO is that it combines object detection ("is there an object?"), classification ("what kind of object is it?"), and localization ("where in the image is the object?") in a single pass through the network. This makes it more computationally efficient and robust than other networks that only perform one or two of these tasks simultaneously.
 

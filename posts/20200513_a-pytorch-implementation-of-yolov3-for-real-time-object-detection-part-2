@@ -3,6 +3,8 @@
 <a href="https://nrsyed.com/2020/04/28/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-1/">Part 1 (Background)</a>
 Part 2 (Initializing the network)
 <a href="https://nrsyed.com/2020/06/30/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-3/">Part 3 (Inference)</a>
+<a href="https://nrsyed.com/2020/09/11/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-4/">Part 4 (Real-time multithreaded detection)</a>
+<a href="https://nrsyed.com/2020/09/20/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-5/">Part 5 (Command-line interface)</a>
 
 The last post went over some of the theory behind YOLOv3. In this post, we'll dig into the code (see the link at the top of this post). The repo is set up as a Python package named <code>yolov3</code>, which can be called from the terminal with a command of the same name (<code>yolov3</code>). Usage details and examples can be found in the repo README, and we'll touch on that a bit later, but I'm going to start by focusing on the core of the code. The first thing that happens is instantiating the <code>Darknet</code> class, initializing it with the appropriate network configuration file, and loading the weights. An example of this is found in <a href="https://github.com/nrsyed/pytorch-yolov3/blob/master/yolov3/__main__.py" rel="noopener noreferrer" target="_blank">__main__.py</a>:
 

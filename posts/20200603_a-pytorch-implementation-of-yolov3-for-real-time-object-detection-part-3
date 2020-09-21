@@ -3,6 +3,8 @@
 <a href="https://nrsyed.com/2020/04/28/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-1/">Part 1 (Background)</a>
 <a href="https://nrsyed.com/2020/05/13/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-2/">Part 2 (Initializing the network)</a>
 Part 3 (Inference)
+<a href="https://nrsyed.com/2020/09/11/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-4/">Part 4 (Real-time multithreaded detection)</a>
+<a href="https://nrsyed.com/2020/09/20/a-pytorch-implementation-of-yolov3-for-real-time-object-detection-part-5/">Part 5 (Command-line interface)</a>
 
 The first post in this series discussed the background and theory underlying YOLOv3, and the previous post focused on (most of) the code responsible for defining and initializing the network. In this post, we'll continue looking at the code, specifically those parts that enable us to perform inference on images and video.
 
