@@ -1,0 +1,14 @@
+baseURL = "https://nrsyed.com/"
+languageCode = "en-us"
+title = "Najam R. Syed"
+theme = "hyde"
+author = "Najam R. Syed"
+
+[menus]
+  main = [
+    {Name = "Github", URL = "https://github.com/nrsyed"},
+    {Name = "LinkedIn", URL = "https://www.linkedin.com/in/najam-syed"}
+  ]
+
+[params]
+  description = "A blog about engineering, programming, and assorted technical miscellanies"
