@@ -3,6 +3,7 @@ Fix formatting of posts exported from WP by WP to Hugo exporter.
 
 Fix __main__ (dunder being bolded).
 Ordered list formatting (parentheses become periods?)
+relative references for links within the site/domain
 """
 import argparse
 from concurrent.futures import ThreadPoolExecutor
@@ -120,39 +121,88 @@ def format_hyperlinks(markdown):
 def format_file(fpath, max_line_len=80):
     formatted_lines = []
 
+    # Extract header from post body and do some preprocessing.
     header = []
-    post = []
+    body = []
     with open(fpath, "r") as f:
         header_delimiter_count = 0
         for line in f:
             # Remove trailing whitespace/newline.
             line = line.rstrip()
             if header_delimiter_count >= 2:
-                # Replace en dashes, em dashes, degree sign with html code.
+                # Replace en dash, em dash, degree sign with html code.
+                # pyparsing does not correctly parse these and truncates
+                # paragraphs at the point where they appear. Instead of
+                # adjusting the grammar, we address this here.
                 line = line.replace("–", "&#8211;")
                 line = line.replace("—", "&#8212;")
                 line = line.replace("°", "&#176;")
-                post.append(line)
+                body.append(line)
             else:
+                # Header is enclosed by "---" at beginning and end.
                 if line == "---":
                     header_delimiter_count += 1
                 header.append(line)
 
-    formatted_post = []
+    # In some places, the converter has put the <pre> tag of the start of a
+    # code block at the end of the last paragraph and added newlines before
+    # the <code> tag. Fix this so code blocks are properly interpreted below.
+    # TODO
+    _body = []
+    i = -1
+    while (i := i + 1) < len(body):
+        line = body[i]
+        pre_tag_re = re.search("<pre", line)
+        if pre_tag_re is not None and pre_tag_re.span()[0] != 0:
+            open_idx, close_idx = pre_tag_re.span()
+
+            _body.append(line[:open_idx])
+            pre_tag = line[open_idx:]
+
+            i += 1
+            while not body[i]:
+                i += 1
+
+            # Converter has indented some of these code blocks; count
+            # indentation and dedent so code appears correctly.
+            line = body[i]
+
+            if line.strip().startswith("<code"):
+                # Count and account for added indentation.
+                indent = len(line) - len(line.lstrip(" "))
+                
+                line = pre_tag + line.strip()
+
+                _body.append("")
+                _body.append(line)
+
+                if indent > 0:
+                    while "</code></pre>" not in line:
+                        i += 1
+                        line = body[i][indent:]
+                        _body.append(line)
+            else:
+                raise RuntimeError("Unexpected text following <pre> tag")
+        else:
+            _body.append(line)
+
+    body = _body
+
+    formatted_body = []
 
     i = -1
-    while (i := i + 1) < len(post):
-        line = post[i]
+    while (i := i + 1) < len(body):
+        line = body[i]
         if line != "\n":
-            line = post[i].strip()
+            line = body[i].strip()
 
         # If this is a code block enclosed in <pre><code> tags, parse with BS.
         if line.startswith("<pre"):
             code_block = []
-            while "</pre>" not in post[i]:
-                code_block.append(post[i])
+            while "</pre>" not in body[i]:
+                code_block.append(body[i])
                 i += 1
-            code_block.append(post[i])
+            code_block.append(body[i])
             soup = bs4.BeautifulSoup("\n".join(code_block), "html.parser")
             pre_tag = soup.find("pre")
             code_tag = soup.find("code")
@@ -176,9 +226,9 @@ def format_file(fpath, max_line_len=80):
 
             shortcode = f"{{{{< highlight {language} {line_num_str}>}}}}"
 
-            formatted_post.append(shortcode)
-            formatted_post.extend(soup.text.split("\n"))
-            formatted_post.append("{{< / highlight >}}")
+            formatted_body.append(shortcode)
+            formatted_body.extend(soup.text.split("\n"))
+            formatted_body.append("{{< / highlight >}}")
         else:
             # TODO: Escape double underscore filenames/variables when not in a
             # code block or an html tag.
@@ -187,17 +237,18 @@ def format_file(fpath, max_line_len=80):
 
             if len(line) > max_line_len:
                 split_lines = split_line(line)
-                formatted_post.extend(split_lines)
+                formatted_body.extend(split_lines)
             else:
-                formatted_post.append(line)
+                formatted_body.append(line)
 
     
-    formatted_text = header + formatted_post
-    formatted_text = "\n".join(formatted_text)
+    formatted_post = header + formatted_body
+    formatted_post = "\n".join(formatted_post)
 
     # Replace hyperlinks with markdown or hugo shortcode.
-    formatted_text = format_hyperlinks(formatted_text)
-    return formatted_text
+    # TODO: do this to the body before joining
+    formatted_post = format_hyperlinks(formatted_post)
+    return formatted_post
 
 
 def format_post(src_fpath, dst_fpath):
@@ -235,8 +286,8 @@ if __name__ == "__main__":
     start_t = time.time()
     pool = ThreadPoolExecutor()
     for src_fpath, dst_fpath in zip(src_fpaths, dst_fpaths):
-        format_post(src_fpath, dst_fpath)
-        #pool.submit(format_post, src_fpath, dst_fpath)
+        #format_post(src_fpath, dst_fpath)
+        pool.submit(format_post, src_fpath, dst_fpath)
     pool.shutdown()
     elapsed = time.time() - start_t
     print(f"Elapsed: {elapsed}")
