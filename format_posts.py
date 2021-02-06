@@ -2,8 +2,7 @@
 Fix formatting of posts exported from WP by WP to Hugo exporter.
 
 Fix __main__ (dunder being bolded).
-Handle html tags and quoted tag attributes.
-Ignore line length in code blocks
+Ordered list formatting (parentheses become periods?)
 """
 import argparse
 from concurrent.futures import ThreadPoolExecutor
@@ -81,6 +80,43 @@ def split_line(line, max_len=80):
     return split_lines
 
 
+def format_hyperlinks(markdown):
+    open_tags = re.finditer(r"<a", markdown)
+    close_tags = re.finditer(r"</a>", markdown)
+
+    updated_markdown = []
+
+    split_idxs = []
+    for open_tag, close_tag in zip(open_tags, close_tags):
+        open_idx = open_tag.span()[0]
+        close_idx = close_tag.span()[1]
+        split_idxs.append(open_idx)
+        split_idxs.append(close_idx)
+
+    if split_idxs[0] != 0:
+        split_idxs.insert(0, 0)
+
+    if split_idxs[-1] != len(markdown):
+        split_idxs.append(len(markdown))
+
+    for i, to_idx in enumerate(split_idxs[1:], start=1):
+        from_idx = split_idxs[i-1]
+        updated_markdown.append(markdown[from_idx:to_idx])
+
+    for i, elem in enumerate(updated_markdown):
+        if elem.startswith("<a"):
+            soup = bs4.BeautifulSoup(elem, "html.parser")
+            a_tag = soup.find("a")
+            url = a_tag["href"]
+            text = a_tag.text
+
+            # TODO: use rel/ref for links to other pages on the domain.
+            link = f"[{text}]({url})"
+            updated_markdown[i] = link
+
+    return "".join(updated_markdown)
+
+
 def format_file(fpath, max_line_len=80):
     formatted_lines = []
 
@@ -102,8 +138,7 @@ def format_file(fpath, max_line_len=80):
 
     i = -1
     while (i := i + 1) < len(post):
-        #if i > 30: breakpoint()
-
+        line = post[i]
         if line != "\n":
             line = post[i].strip()
 
@@ -141,11 +176,10 @@ def format_file(fpath, max_line_len=80):
             formatted_post.extend(soup.text.split("\n"))
             formatted_post.append("{{< / highlight >}}")
         else:
-            # Escape double underscore filenames/variables when not in a code
-            # block or an html tag.
-            if "__" in line:
-                soup = bs4.BeautifulSoup(line, "html.parser")
-                # TODO
+            # TODO: Escape double underscore filenames/variables when not in a
+            # code block or an html tag.
+            #if "__" in line:
+            #    soup = bs4.BeautifulSoup(line, "html.parser")
 
             if len(line) > max_line_len:
                 split_lines = split_line(line)
@@ -153,14 +187,21 @@ def format_file(fpath, max_line_len=80):
             else:
                 formatted_post.append(line)
 
-    return header + formatted_post
+    
+    formatted_text = header + formatted_post
+    formatted_text = "\n".join(formatted_text)
+
+    # Replace hyperlinks with markdown or hugo shortcode.
+    formatted_text = format_hyperlinks(formatted_text)
+    return formatted_text
 
 
 def format_post(src_fpath, dst_fpath):
-    formatted_post = format_file(src_fpath)
+    formatted_text = format_file(src_fpath)
     with open(dst_fpath, "w") as f:
-        for line in formatted_post:
-            f.write(line + "\n")
+        f.write(formatted_text)
+        #for line in formatted_post:
+        #    f.write(line + "\n")
 
 
 if __name__ == "__main__":
