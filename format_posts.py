@@ -128,6 +128,10 @@ def format_file(fpath, max_line_len=80):
             # Remove trailing whitespace/newline.
             line = line.rstrip()
             if header_delimiter_count >= 2:
+                # Replace en dashes, em dashes, degree sign with html code.
+                line = line.replace("–", "&#8211;")
+                line = line.replace("—", "&#8212;")
+                line = line.replace("°", "&#176;")
                 post.append(line)
             else:
                 if line == "---":
@@ -200,8 +204,6 @@ def format_post(src_fpath, dst_fpath):
     formatted_text = format_file(src_fpath)
     with open(dst_fpath, "w") as f:
         f.write(formatted_text)
-        #for line in formatted_post:
-        #    f.write(line + "\n")
 
 
 if __name__ == "__main__":
