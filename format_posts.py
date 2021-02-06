@@ -81,6 +81,14 @@ def split_line(line, max_len=80):
     return split_lines
 
 
+def ref_shortcode_from_domain_url(url):
+    match = re.match("https://nrsyed\.com/(.*)/$", url)
+    url = match.groups()[0]
+    ref = url.replace("/", "-") + ".md"
+    shortcode = f'{{{{< ref "{ref}" >}}}}'
+    return shortcode
+
+
 def format_hyperlinks(markdown):
     open_tags = re.finditer(r"<a", markdown)
     close_tags = re.finditer(r"</a>", markdown)
@@ -111,8 +119,11 @@ def format_hyperlinks(markdown):
             url = a_tag["href"]
             text = a_tag.text
 
-            # TODO: use rel/ref for links to other pages on the domain.
-            link = f"[{text}]({url})"
+            # Use rel/ref for links to other pages on the domain.
+            if "nrsyed.com" in url:
+                url = ref_shortcode_from_domain_url(url)
+
+            link = f"[{text.lstrip()}]({url})"
             updated_markdown[i] = link
 
     return "".join(updated_markdown)
@@ -147,7 +158,6 @@ def format_file(fpath, max_line_len=80):
     # In some places, the converter has put the <pre> tag of the start of a
     # code block at the end of the last paragraph and added newlines before
     # the <code> tag. Fix this so code blocks are properly interpreted below.
-    # TODO
     _body = []
     i = -1
     while (i := i + 1) < len(body):
@@ -235,7 +245,18 @@ def format_file(fpath, max_line_len=80):
             #if "__" in line:
             #    soup = bs4.BeautifulSoup(line, "html.parser")
 
-            if len(line) > max_line_len:
+            # If this line represents a reference style link, do not break up.
+            # Use rel/ref for links to other pages on the domain.
+            ref_style_match = re.match("^\[(\d+)\]: (.*)", line)
+
+            if ref_style_match:
+                url = ref_style_match.groups()[1]
+                if "nrsyed.com" in url:
+                    url = ref_shortcode_from_domain_url(url)
+                    ref_num = ref_style_match.groups()[0]
+                    line = f"[{ref_num}]: {url}"
+                formatted_body.append(line)
+            elif len(line) > max_line_len:
                 split_lines = split_line(line)
                 formatted_body.extend(split_lines)
             else:
