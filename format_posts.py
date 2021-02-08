@@ -145,13 +145,14 @@ def format_file(fpath, max_line_len=80):
             # Remove trailing whitespace/newline.
             line = line.rstrip()
             if header_delimiter_count >= 2:
-                # Replace en dash, em dash, degree sign with html code.
-                # pyparsing does not correctly parse these and truncates
-                # paragraphs at the point where they appear. Instead of
-                # adjusting the grammar, we address this here.
+                # Replace special characters with html code; pyparsing does not
+                # correctly parse these and truncates paragraphs where they
+                # appear. We address this here instead of in the grammar.
                 line = line.replace("–", "&#8211;")
                 line = line.replace("—", "&#8212;")
                 line = line.replace("°", "&#176;")
+                line = line.replace("θ", "&theta;")
+                line = line.replace("\xa0", " ")
                 body.append(line)
             else:
                 # Header is enclosed by "---" at beginning and end.
