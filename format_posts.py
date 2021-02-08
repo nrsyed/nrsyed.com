@@ -154,6 +154,12 @@ def format_file(fpath, max_line_len=80):
                 line = line.replace("θ", "&theta;")
                 line = line.replace("Δ", "&Delta;")
                 line = line.replace("\xa0", " ")
+                line = line.replace("º", "&#176;")
+
+                # Replace LaTeX start/end and subscript characters.
+                line = line.replace("\\(", "$$")
+                line = line.replace("\\)", "$$")
+                line = line.replace("\\_", "_")
                 body.append(line)
             else:
                 # Header is enclosed by "---" at beginning and end.
