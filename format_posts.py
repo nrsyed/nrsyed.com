@@ -1,9 +1,10 @@
 """
 Fix formatting of posts exported from WP by WP to Hugo exporter.
 
-Fix __main__ (dunder being bolded).
+LaTeX/MathJax
+Fix __main__ (dunder being bolded)
 Ordered list formatting (parentheses become periods?)
-relative references for links within the site/domain
+Add alt text to images
 """
 import argparse
 from concurrent.futures import ThreadPoolExecutor
@@ -93,8 +94,6 @@ def format_hyperlinks(markdown):
     open_tags = re.finditer(r"<a", markdown)
     close_tags = re.finditer(r"</a>", markdown)
 
-    updated_markdown = []
-
     split_idxs = []
     for open_tag, close_tag in zip(open_tags, close_tags):
         open_idx = open_tag.span()[0]
@@ -102,31 +101,36 @@ def format_hyperlinks(markdown):
         split_idxs.append(open_idx)
         split_idxs.append(close_idx)
 
-    if split_idxs[0] != 0:
-        split_idxs.insert(0, 0)
+    updated_markdown = markdown
+    if split_idxs:
+        _updated_markdown = []
 
-    if split_idxs[-1] != len(markdown):
-        split_idxs.append(len(markdown))
+        if split_idxs[0] != 0:
+            split_idxs.insert(0, 0)
 
-    for i, to_idx in enumerate(split_idxs[1:], start=1):
-        from_idx = split_idxs[i-1]
-        updated_markdown.append(markdown[from_idx:to_idx])
+        if split_idxs[-1] != len(markdown):
+            split_idxs.append(len(markdown))
 
-    for i, elem in enumerate(updated_markdown):
-        if elem.startswith("<a"):
-            soup = bs4.BeautifulSoup(elem, "html.parser")
-            a_tag = soup.find("a")
-            url = a_tag["href"]
-            text = a_tag.text
+        for i, to_idx in enumerate(split_idxs[1:], start=1):
+            from_idx = split_idxs[i-1]
+            _updated_markdown.append(markdown[from_idx:to_idx])
 
-            # Use rel/ref for links to other pages on the domain.
-            if "nrsyed.com" in url:
-                url = ref_shortcode_from_domain_url(url)
+        for i, elem in enumerate(_updated_markdown):
+            if elem.startswith("<a"):
+                soup = bs4.BeautifulSoup(elem, "html.parser")
+                a_tag = soup.find("a")
+                url = a_tag["href"]
+                text = a_tag.text
 
-            link = f"[{text.lstrip()}]({url})"
-            updated_markdown[i] = link
+                # Use rel/ref for links to other pages on the domain.
+                if "nrsyed.com" in url:
+                    url = ref_shortcode_from_domain_url(url)
 
-    return "".join(updated_markdown)
+                link = f"[{text.lstrip()}]({url})"
+                _updated_markdown[i] = link
+        updated_markdown = "".join(_updated_markdown)
+
+    return updated_markdown
 
 
 def format_file(fpath, max_line_len=80):
@@ -239,6 +243,19 @@ def format_file(fpath, max_line_len=80):
             formatted_body.append(shortcode)
             formatted_body.extend(soup.text.split("\n"))
             formatted_body.append("{{< / highlight >}}")
+        elif line.startswith("<img"):
+            # TODO: use image size srcset to reduce loading time and bandwith?
+            soup = bs4.BeautifulSoup(line, "html.parser")
+            img_tag = soup.find("img")
+            fname = os.path.split(img_tag["src"])[1]
+
+            # Extract the filename of the original (unresized) image.
+            match = re.match("([^-]+)([0-9x-]*)(\.\w{3})", fname)
+            fstem, size, ext = match.groups()
+            fpath = f"/img/{fstem}{ext}"
+
+            shortcode = f"{{{{< figure src={fpath} >}}}}"
+            formatted_body.append(shortcode)
         else:
             # TODO: Escape double underscore filenames/variables when not in a
             # code block or an html tag.
@@ -307,8 +324,8 @@ if __name__ == "__main__":
     start_t = time.time()
     pool = ThreadPoolExecutor()
     for src_fpath, dst_fpath in zip(src_fpaths, dst_fpaths):
-        #format_post(src_fpath, dst_fpath)
-        pool.submit(format_post, src_fpath, dst_fpath)
+        format_post(src_fpath, dst_fpath)
+        #pool.submit(format_post, src_fpath, dst_fpath)
     pool.shutdown()
     elapsed = time.time() - start_t
     print(f"Elapsed: {elapsed}")
