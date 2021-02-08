@@ -264,7 +264,8 @@ tbody tr:nth-child(odd) th {
 
 .page,
 .post {
-  margin-bottom: 4em;
+  /*margin-bottom: 4em;*/
+  margin-bottom: 0.25em;
 }
 
 /* Blog post or page title */
