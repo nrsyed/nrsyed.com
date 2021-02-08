@@ -152,6 +152,7 @@ def format_file(fpath, max_line_len=80):
                 line = line.replace("—", "&#8212;")
                 line = line.replace("°", "&#176;")
                 line = line.replace("θ", "&theta;")
+                line = line.replace("Δ", "&Delta;")
                 line = line.replace("\xa0", " ")
                 body.append(line)
             else:
