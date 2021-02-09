@@ -3,7 +3,7 @@
 {{ range .Site.RegularPages -}}
 <article class="post">
   <div class="post-title">
-    <a href="{{ .Permalink }}">{{ .Title }}</a>
+    <a href="{{ .Permalink }}">{{ .Title | safeHTML }}</a>
   </div>
 </article>
 {{- end }}
