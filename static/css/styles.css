@@ -2,6 +2,12 @@ iframe {
   padding-bottom: 1rem;
 }
 
+div.highlight {
+  overflow: auto;
+  border-radius: .5em;
+  border: .2em solid hsl(0, 0%, 33%);
+}
+
 .katex {
   font-size: 1.1em !important;
 }
