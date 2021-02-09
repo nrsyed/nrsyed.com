@@ -173,38 +173,42 @@ def format_file(fpath, max_line_len=80):
     _body = []
     i = -1
     while (i := i + 1) < len(body):
-        line = body[i]
+        line = body[i].lstrip()
         pre_tag_re = re.search("<pre", line)
+
         if pre_tag_re is not None and pre_tag_re.span()[0] != 0:
             open_idx, close_idx = pre_tag_re.span()
 
             _body.append(line[:open_idx])
             pre_tag = line[open_idx:]
 
-            i += 1
-            while not body[i]:
-                i += 1
-
-            # Converter has indented some of these code blocks; count
-            # indentation and dedent so code appears correctly.
-            line = body[i]
-
-            if line.strip().startswith("<code"):
-                # Count and account for added indentation.
-                indent = len(line) - len(line.lstrip(" "))
-                
-                line = pre_tag + line.strip()
-
-                _body.append("")
+            if "</code></pre>" in line:
                 _body.append(line)
-
-                if indent > 0:
-                    while "</code></pre>" not in line:
-                        i += 1
-                        line = body[i][indent:]
-                        _body.append(line)
             else:
-                raise RuntimeError("Unexpected text following <pre> tag")
+                i += 1
+                while not body[i]:
+                    i += 1
+
+                # Converter has indented some of these code blocks; count
+                # indentation and dedent so code appears correctly.
+                line = body[i]
+
+                if line.strip().startswith("<code"):
+                    # Count and account for added indentation.
+                    indent = len(line) - len(line.lstrip(" "))
+                    
+                    line = pre_tag + line.strip()
+
+                    _body.append("")
+                    _body.append(line)
+
+                    if indent > 0:
+                        while "</code></pre>" not in line:
+                            i += 1
+                            line = body[i][indent:]
+                            _body.append(line)
+                else:
+                    raise RuntimeError("Unexpected text following <pre> tag")
         else:
             _body.append(line)
 
