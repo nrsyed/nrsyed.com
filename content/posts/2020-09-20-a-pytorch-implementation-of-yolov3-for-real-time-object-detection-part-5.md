@@ -131,7 +131,7 @@ while running the detection pipeline.
 
 We use argparse to process these command line arguments, then initialize the
 network and set some basic parameters starting on **line 106**
-[of the current version of __main__.py](https://github.com/nrsyed/pytorch-yolov3/blob/dd8344d7620fde09610f1ac2fadf7bcf88a9c6f1/yolov3/__main__.py#L106).
+[of the current version of \_\_main__.py](https://github.com/nrsyed/pytorch-yolov3/blob/dd8344d7620fde09610f1ac2fadf7bcf88a9c6f1/yolov3/__main__.py#L106).
 
 {{< highlight python "linenos=true,linenostart=106" >}}
     device = args["device"]
