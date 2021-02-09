@@ -83,9 +83,15 @@ def split_line(line, max_len=80):
 
 
 def ref_shortcode_from_domain_url(url):
-    match = re.match("https://nrsyed\.com/(.*)/$", url)
-    url = match.groups()[0]
+    expr = "https://nrsyed\.com/(.*)(/|#.*)$"
+    match = re.match(expr, url)
+
+    url, anchor = match.groups()
     ref = url.replace("/", "-") + ".md"
+
+    if anchor.startswith("#"):
+        ref += anchor
+
     shortcode = f'{{{{< ref "{ref}" >}}}}'
     return shortcode
 
