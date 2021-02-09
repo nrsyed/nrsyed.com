@@ -225,6 +225,7 @@ convenience:
 There&#8217;s also a special &#8220;net&#8221; block at the beginning of the
 config file:
 
+<span id="net-block" />
 {{< highlight plain >}}
 [net]
 # Testing
