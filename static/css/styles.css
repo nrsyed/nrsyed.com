@@ -5,3 +5,10 @@ iframe {
 .katex {
   font-size: 1.1em !important;
 }
+
+.aside {
+  background-color: rgba(0,0,0,0.1);
+  margin: 1.75em 0 1.75em;
+  padding: 0.2em 1em;
+  border-radius: 2%;
+}

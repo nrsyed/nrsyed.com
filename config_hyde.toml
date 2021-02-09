@@ -4,6 +4,10 @@ title = "Najam R. Syed"
 theme = "hyde"
 author = "Najam R. Syed"
 
+[markup]
+  [markup.goldmark.renderer]
+    unsafe=true
+
 [menus]
   main = [
     {Name = "Github", URL = "https://github.com/nrsyed"},
