@@ -8,6 +8,16 @@ div.highlight {
   border: .2em solid hsl(0, 0%, 33%);
 }
 
+div.highlight > pre {
+  /* float: left ensures that overflowing code retains its background color
+   * within the scrollable element. min-width: 100% ensures that
+   * non-overflowing code blocks retain the background color over the width
+   * of the code block instead of ending prematurely at the end of the line.
+   */
+  float: left;
+  min-width: 100%;
+}
+
 .katex {
   font-size: 1.1em !important;
 }
