@@ -1,0 +1,74 @@
+code,
+pre {
+  font-family: Menlo, Monaco, "Courier New", monospace;
+}
+
+code {
+  padding: .25em 0;
+  font-size: 95%;
+  color: #b3555e;
+  background-color: #f9f9f9;
+  border-radius: 3px;
+}
+
+pre {
+  display: block;
+  margin-top: 0;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  white-space: pre;
+  word-break: break-all;
+  word-wrap: break-word;
+  background-color: #f9f9f9;
+}
+
+pre code {
+  padding: 0;
+  font-size: 95%;
+  color: inherit;
+  background-color: transparent;
+}
+
+.highlight {
+  margin-bottom: 1rem;
+  border-radius: 4px;
+}
+
+.highlight pre {
+  margin-bottom: 0;
+
+  padding-left: 0.5rem;
+}
+
+div.highlight {
+  overflow: auto;
+}
+
+div.highlight > pre {
+  /* float: left ensures that overflowing code retains its background color
+   * within the scrollable element. min-width: 100% ensures that
+   * non-overflowing code blocks retain the background color over the width
+   * of the code block instead of ending prematurely at the end of the line.
+   */
+  float: left;
+  min-width: 100%;
+
+  border-radius: .5em;
+  border: .2em solid hsl(0, 0%, 33%);
+}
+
+
+/* code blocks with line numbers */
+div.highlight > div  {
+  float: left;
+  min-width: 100%;
+  border-radius: .5em;
+  border: .2em solid hsl(0, 0%, 33%);
+}
+div.highlight table  {
+  float: left;
+  min-width: 100%;
+  border-radius: .5em;
+}
