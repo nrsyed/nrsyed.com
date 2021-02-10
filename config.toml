@@ -11,8 +11,30 @@ author = "Najam R. Syed"
 [menus]
   main = [
     {Name = "Github", URL = "https://github.com/nrsyed"},
-    {Name = "LinkedIn", URL = "https://www.linkedin.com/in/najam-syed"}
+    {Name = "LinkedIn", URL = "https://www.linkedin.com/in/najam-syed"},
   ]
+
+[[menu.main]]
+  name = "Archive"
+  identifier = "archive"
+  url = "/archive/"
+  weight = 10
+
+[[menu.main]]
+  name = "About"
+  identifier = "about"
+  url = "/about/"
+  weight = 20
+
+[[menu.main]]
+  name = "Github"
+  weight = 30
+  url = "https://github.com/nrsyed"
+
+[[menu.main]]
+  name = "LinkedIn"
+  weight = 40
+  url = "https://www.linkedin.com/in/najam-syed"
 
 [params]
   description = "Engineering, programming, and assorted technical miscellanies"
