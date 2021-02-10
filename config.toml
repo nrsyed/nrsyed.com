@@ -1,33 +1,27 @@
 baseURL = "https://nrsyed.com/"
 languageCode = "en-us"
 title = "Najam R. Syed"
-theme = "hyde"
+theme = "hyde-hyde"
 author = "Najam R. Syed"
 
 [markup]
   [markup.goldmark.renderer]
-    unsafe=true
+    unsafe = true
 
 [[menu.main]]
   name = "About"
-  identifier = "about"
   url = "/about/"
   weight = 10
 
 [[menu.main]]
   name = "Posts"
   url = "/posts/"
-  weight = 10
-
-[[menu.main]]
-  name = "Github"
-  weight = 30
-  url = "https://github.com/nrsyed"
-
-[[menu.main]]
-  name = "LinkedIn"
-  weight = 40
-  url = "https://www.linkedin.com/in/najam-syed"
+  weight = 20
 
 [params]
   description = "Engineering, programming, and technical miscellanies"
+
+[params.social]
+  github = "nrsyed"
+  linkedin = "najam-syed"
+  youtube = "UCiCUUVapPoHckB1xdZFTHiA"

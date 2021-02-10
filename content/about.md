@@ -1,7 +1,6 @@
 +++
 title = "About"
-type = "page"
-layout = "about"
+type = "about"
 +++
 
 {{< figure src=/img/me.jpg class="bio" >}}

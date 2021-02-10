@@ -1,17 +1,30 @@
-{{ define "main" -}}
-<div class="posts">
-  <h1>{{ .Title }}</h1>
-{{ range (where .Site.Pages "Type" "post")}}
-<article class="post">
-  <div class="post-title">
-    <a href="{{ .Permalink }}">{{ .Title | safeHTML }}</a>
+{{ define "header" }}
+  {{ partial "header.html" . }}
+{{ end }}
+
+{{ define "content" }}
+  <div class="post-list">
+    <h1>{{ .Title }}</h1>
   </div>
-  <time
-    datetime="{{ .Date.Format "2006-01-02T15:04:05Z0700" }}"
-    class="post-date"
-  >{{ .Date.Format "Mon, Jan 2, 2006" }}
-  </time>
-</article>
-{{- end }}
-</div>
-{{- end }}
+  {{ range (where .Site.Pages "Type" "post")}}
+  <article class="post">
+    <div class="post-title">
+      <a href="{{ .Permalink }}">{{ .Title | safeHTML }}</a>
+    </div>
+    <time
+      datetime="{{ .Date.Format "2006-01-02T15:04:05Z0700" }}"
+      class="post-date"
+    >{{ .Date.Format "Mon, Jan 2, 2006" }}
+    </time>
+  </article>
+  {{- end }}
+
+{{ end }}
+
+{{ define "footer" }}
+  {{ if .Site.GoogleAnalytics }}
+    <!-- Google Analytics -->
+    {{ template "_internal/google_analytics_async.html" . }}
+  {{ end }}
+  {{ partial "footer/font-awesome-js.html" . }}
+{{ end }}

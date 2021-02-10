@@ -1,0 +1,63 @@
+iframe {
+  padding-bottom: 1rem;
+}
+
+.katex {
+  font-size: 1.1em !important;
+}
+
+ul {
+  margin-bottom: 0.5rem;
+}
+
+.aside {
+  background-color: rgba(0,0,0,0.1);
+  margin: 1.75em 0 1.75em;
+  padding: 0.2em 1em;
+  border-radius: 2%;
+}
+
+
+.posts .post-date {
+  font-size: 0.9em;
+  margin-bottom: 0em;
+}
+
+.posts .post-title {
+  font-size: 1.1em;
+}
+
+article.post {
+  margin-bottom: 0.25em;
+
+  time {
+    margin-bottom: 0;
+  }
+}
+
+.about code {
+  font-weight: bold;
+  background-color: transparent;
+  color: #515151;
+  font-size: 100%;
+}
+
+figure.bio img {
+  border-radius: 50%;
+  border: 0.3em solid hsl(0, 0%, 10%);
+  display: block;
+  /*margin: 0 auto;*/
+  width: 16rem;
+
+}
+
+/* Overrides _responsive.scss */
+@media (min-width: 768px) {
+  .content {
+    max-width: 47rem;
+  }
+}
+
+.sidebar {
+  background-color: #202020;
+}
