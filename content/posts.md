@@ -1,6 +1,6 @@
 +++
 draft = false
-title = "Archive"
+title = "Posts"
 type = "page"
 layout = "archive"
 +++

@@ -8,23 +8,16 @@ author = "Najam R. Syed"
   [markup.goldmark.renderer]
     unsafe=true
 
-[menus]
-  main = [
-    {Name = "Github", URL = "https://github.com/nrsyed"},
-    {Name = "LinkedIn", URL = "https://www.linkedin.com/in/najam-syed"},
-  ]
-
-[[menu.main]]
-  name = "Archive"
-  identifier = "archive"
-  url = "/archive/"
-  weight = 10
-
 [[menu.main]]
   name = "About"
   identifier = "about"
   url = "/about/"
-  weight = 20
+  weight = 10
+
+[[menu.main]]
+  name = "Posts"
+  url = "/posts/"
+  weight = 10
 
 [[menu.main]]
   name = "Github"
@@ -37,4 +30,4 @@ author = "Najam R. Syed"
   url = "https://www.linkedin.com/in/najam-syed"
 
 [params]
-  description = "Engineering, programming, and assorted technical miscellanies"
+  description = "Engineering, programming, and technical miscellanies"

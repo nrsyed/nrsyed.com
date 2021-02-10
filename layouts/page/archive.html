@@ -1,5 +1,6 @@
 {{ define "main" -}}
 <div class="posts">
+  <h1>{{ .Title }}</h1>
 {{ range (where .Site.Pages "Type" "post")}}
 <article class="post">
   <div class="post-title">
