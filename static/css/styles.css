@@ -22,6 +22,10 @@ div.highlight > pre {
   font-size: 1.1em !important;
 }
 
+ul {
+  margin-bottom: 0.5rem;
+}
+
 .aside {
   background-color: rgba(0,0,0,0.1);
   margin: 1.75em 0 1.75em;
@@ -36,4 +40,20 @@ div.highlight > pre {
 
 .posts .post-title {
   font-size: 1.1em;
+}
+
+.about code {
+  font-weight: bold;
+  background-color: transparent;
+  color: #515151;
+  font-size: 100%;
+}
+
+figure.bio img {
+  border-radius: 50%;
+  border: 0.3em solid hsl(0, 0%, 10%);
+  display: block;
+  /*margin: 0 auto;*/
+  width: 16rem;
+
 }
