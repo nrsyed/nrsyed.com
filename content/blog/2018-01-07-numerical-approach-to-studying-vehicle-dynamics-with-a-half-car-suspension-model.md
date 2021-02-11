@@ -33,8 +33,6 @@ $ python example.py
 
 The original post follows below.
 
-<hr style="border: 1px solid black; color: black;" />
-
 ******
 
 &#8220;Vehicle dynamics&#8221; is a delightfully broad term that, in equally

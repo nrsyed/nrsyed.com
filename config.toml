@@ -9,14 +9,25 @@ author = "Najam R. Syed"
     unsafe = true
 
 [[menu.main]]
-  name = "About"
-  url = "/about/"
-  weight = 10
+  name = "Home"
+  url = "/"
+  weight = 1
 
 [[menu.main]]
   name = "Posts"
   url = "/posts/"
   weight = 20
+
+[[menu.main]]
+  name = "Projects"
+  identifier = "projects"
+  url = "/projects/"
+  weight = 30
+
+[[menu.main]]
+  name = "About"
+  url = "/about/"
+  weight = 40
 
 [params]
   description = "Engineering, programming, and technical miscellanies"
