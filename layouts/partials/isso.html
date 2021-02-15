@@ -1,10 +1,11 @@
 {{ "<!-- isso -->" | safeHTML }}
 <script
-  data-isso="{{ .Site.baseURL }}/isso/"
+  data-isso="/isso/"
+  data-isso-id="{{ .RelPermalink }}"
   data-isso-reply-to-self="true"
   data-isso-require-author="true"
   data-isso-reply-notifications="true"
   data-isso-vote="false"
-  src="{{ .Site.baseURL }}/isso/js/embed.min.js"
+  src="/isso/js/embed.min.js"
 ></script>
 {{ "<!-- end isso -->" | safeHTML }}

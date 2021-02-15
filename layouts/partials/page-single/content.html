@@ -29,5 +29,10 @@
   {{ partial "page-single/post-navigation.html" . }}
   {{ partial "page-single/post-related.html" . }}
   {{ partial "page-single/post-comment.html" . }}
-  <div id="isso-thread"></div>
+  {{ partial "isso.html" . }}
+  <section
+    id="isso-thread"
+    data-isso-id="{{ .RelPermalink }}"
+    data-title="{{ .RelPermalink }}"
+  ></section>
 </article>

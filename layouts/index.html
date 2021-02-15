@@ -10,9 +10,8 @@
 {{ end }}
 
 {{ define "footer" }}
-  {{ if .Site.GoogleAnalytics }}
-    <!-- Google Analytics -->
-    {{ template "_internal/google_analytics_async.html" . }}
-  {{ end }}
+  {{ partial "page-single/footer.html" . }}
+  {{ partial "page-single/variables-deinit.html" . }}
+  {{ if .Params.katex }}{{ partial "katex.html" . }}{{ end }}
   {{ partial "footer/font-awesome-js.html" . }}
 {{ end }}
