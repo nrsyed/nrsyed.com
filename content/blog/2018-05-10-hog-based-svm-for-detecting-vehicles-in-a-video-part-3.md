@@ -8,14 +8,12 @@ categories:
   - Computer Vision
   - Machine Learning
 tags:
-  - computer vision
   - HOG
+  - SVM
   - image processing
-  - machine learning
   - object detection
   - OpenCV
   - Python
-  - SVM
 
 ---
 This post is part of a series on developing an SVM classifier for object

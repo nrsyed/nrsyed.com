@@ -7,11 +7,10 @@ url: /2018/02/18/edge-detection-in-images-how-to-derive-the-sobel-operator/
 categories:
   - Computer Vision
 tags:
-  - computer vision
   - edge detection
   - image filtering
   - image processing
-  - kernel
+  - image kernels
   - Sobel
 katex: true
 markup: "mmark"

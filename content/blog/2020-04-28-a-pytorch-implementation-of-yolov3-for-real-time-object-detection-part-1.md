@@ -10,15 +10,11 @@ categories:
   - Deep Learning
   - Machine Learning
 tags:
-  - algorithms
-  - computer vision
-  - deep learning
   - K-means clustering
-  - machine learning
   - neural networks
   - object detection
   - Python
-  - yolov3
+  - yolo
 
 ---
 **Link to code**:

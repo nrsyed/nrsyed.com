@@ -8,21 +8,12 @@ categories:
   - Computer Vision
   - Linux
 tags:
-  - Arch
-  - Arch Linux
-  - build
   - C++
-  - compile
-  - computer vision
   - Linux
   - OpenCV
   - Python
-  - repository
-  - source
-  - virtual environment
   - virtual machine
   - VirtualBox
-  - virtualenv
   - VM
 
 ---

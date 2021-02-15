@@ -7,18 +7,14 @@ url: /2018/09/27/visualizing-sorting-algorithms-and-time-complexity-with-matplot
 categories:
   - Algorithms
 tags:
-  - algorithms
   - bubble sort
-  - generators
   - insertion sort
   - matplotlib
   - merge sort
-  - programming
   - Python
   - quicksort
   - selection sort
   - sorting
-  - time complexity
 katex: true
 markup: "mmark"
 

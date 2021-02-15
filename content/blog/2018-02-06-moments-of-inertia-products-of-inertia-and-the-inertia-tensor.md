@@ -8,8 +8,6 @@ categories:
   - Kinematics/Dynamics
 tags:
   - inertia tensor
-  - moment of inertia
-  - product of inertia
 katex: true
 markup: "mmark"
 

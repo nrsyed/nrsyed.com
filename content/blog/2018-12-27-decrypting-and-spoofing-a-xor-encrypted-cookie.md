@@ -8,15 +8,11 @@ categories:
   - Algorithms
   - Cybersecurity
 tags:
-  - algorithms
-  - brute force
   - cookies
-  - cybersecurity
   - decryption
   - encryption
   - spoofing
   - XOR
-  - XOR key
 katex: true
 markup: "mmark"
 

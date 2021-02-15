@@ -8,11 +8,9 @@ categories:
   - Computer Vision
   - Machine Learning
 tags:
-  - computer vision
   - HOG
-  - machine learning
-  - object detection
   - SVM
+  - object detection
 katex: true
 markup: "mmark"
 

@@ -8,9 +8,7 @@ categories:
   - Computer Vision
   - Machine Learning
 tags:
-  - computer vision
   - K-means clustering
-  - machine learning
   - OpenCV
   - Python
 

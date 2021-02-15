@@ -10,16 +10,11 @@ categories:
   - Deep Learning
   - Machine Learning
 tags:
-  - algorithms
-  - computer vision
-  - deep learning
-  - machine learning
   - neural networks
   - object detection
   - OpenCV
   - Python
   - yolo
-  - yolov3
 
 ---
 **Link to code**:

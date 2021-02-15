@@ -8,12 +8,10 @@ categories:
   - Computer Vision
   - Machine Learning
 tags:
-  - computer vision
   - HOG
-  - machine learning
+  - SVM
   - object detection
   - OpenCV
-  - SVM
 
 ---
 This post is part of a series on developing an SVM classifier to find vehicles

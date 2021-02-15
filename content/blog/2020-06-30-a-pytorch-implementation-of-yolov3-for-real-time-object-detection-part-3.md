@@ -10,17 +10,12 @@ categories:
   - Deep Learning
   - Machine Learning
 tags:
-  - algorithms
-  - computer vision
-  - deep learning
   - image processing
-  - machine learning
   - neural networks
   - numerical methods
   - object detection
   - Python
   - yolo
-  - yolov3
 katex: true
 markup: "mmark"
 

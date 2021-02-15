@@ -9,11 +9,8 @@ categories:
   - Machine Learning
 tags:
   - color spaces
-  - computer vision
-  - image processing
   - image segmentation
   - K-means clustering
-  - machine learning
 
 ---
 If you&#8217;re sighted and have ever been to an eye doctor, you&#8217;ve

@@ -7,7 +7,6 @@ url: /2018/07/05/multithreading-with-opencv-python-to-improve-video-processing-p
 categories:
   - Computer Vision
 tags:
-  - computer vision
   - image processing
   - multithreading
   - OpenCV

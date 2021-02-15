@@ -11,7 +11,6 @@ tags:
   - matplotlib
   - plotting
   - Python
-  - springs
 katex: true
 markup: "mmark"
 

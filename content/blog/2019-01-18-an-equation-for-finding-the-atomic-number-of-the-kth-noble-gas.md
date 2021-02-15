@@ -8,8 +8,6 @@ categories:
   - Algorithms
   - Chemistry
 tags:
-  - algorithms
-  - chemistry
   - patterns
   - periodic table
   - physics

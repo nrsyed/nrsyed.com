@@ -7,12 +7,10 @@ url: /2018/02/08/real-time-video-histograms-with-opencv-and-python/
 categories:
   - Computer Vision
 tags:
-  - histogram
   - image processing
   - matplotlib
   - OpenCV
   - Python
-  - real-time
 
 ---
 In this post, we&#8217;ll use OpenCV-Python to process video from a camera (or

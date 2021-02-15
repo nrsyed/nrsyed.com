@@ -7,7 +7,6 @@ url: /2017/12/17/animating-the-jacobian-inverse-method-with-an-interactive-matpl
 categories:
   - Kinematics/Dynamics
 tags:
-  - interactive plotting
   - inverse kinematics
   - matplotlib
   - Python

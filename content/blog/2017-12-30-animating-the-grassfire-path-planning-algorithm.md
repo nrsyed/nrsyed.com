@@ -9,10 +9,8 @@ categories:
 tags:
   - breadth-first search
   - graph theory
-  - Grassfire
   - matplotlib
   - navigation
-  - path-finding
   - path-planning
   - Python
 

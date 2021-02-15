@@ -8,12 +8,10 @@ categories:
   - Kinematics/Dynamics
 tags:
   - differential equations
-  - half-car model
   - linear algebra
   - matplotlib
   - numerical methods
   - Python
-  - suspension
   - vehicle dynamics
 katex: true
 markup: "mmark"

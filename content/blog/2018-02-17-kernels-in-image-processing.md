@@ -7,10 +7,9 @@ url: /2018/02/17/kernels-in-image-processing/
 categories:
   - Computer Vision
 tags:
-  - computer vision
   - convolution
   - image processing
-  - kernel
+  - image kernels
 katex: true
 markup: "mmark"
 
