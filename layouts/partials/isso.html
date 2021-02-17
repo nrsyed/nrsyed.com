@@ -8,4 +8,10 @@
   data-isso-vote="false"
   src="/isso/js/embed.min.js"
 ></script>
+
+<section
+  id="isso-thread"
+  data-isso-id="{{ .RelPermalink }}"
+  data-title="{{ .RelPermalink }}"
+></section>
 {{ "<!-- end isso -->" | safeHTML }}

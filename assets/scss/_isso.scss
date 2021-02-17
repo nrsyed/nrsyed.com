@@ -1,0 +1,43 @@
+@media (min-width: 768px) {
+  #isso-thread {
+    h1, h2, h3, h4, h5, h6 {
+      display: inline;
+      font-size: $small-device-font-size;
+      font-weight: normal;
+    }
+  }
+}
+
+@media (min-width: 992px) {
+  #isso-thread {
+    h1, h2, h3, h4, h5, h6 {
+      display: inline;
+      font-size: $large-device-font-size;
+      font-weight: normal;
+    }
+  }
+}
+
+.isso-postbox {
+  .textarea-wrapper {
+    margin: 0 0 .3em;
+
+    &> .textarea {
+      margin: 0;
+    }
+  }
+
+  .form-wrapper > .auth-section .post-action > input {
+    border-radius: 12% !important;
+    color: #fff;
+    background-color: #1971c2 !important;
+    font-family: inherit;
+    font-size: .8em;
+    font-weight: bold;
+    line-height: 1.6em !important;
+  }
+
+  .form-wrapper > .auth-section > .input-wrapper {
+    margin: 0 .1em;
+  }
+}
