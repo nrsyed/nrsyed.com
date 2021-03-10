@@ -31,6 +31,7 @@ author = "Najam R. Syed"
 
 [params]
   description = "Engineering, programming, and technical miscellanies"
+  authorimage = "img/beach.jpg"
 
 [params.social]
   github = "nrsyed"
