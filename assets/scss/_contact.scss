@@ -1,0 +1,52 @@
+.contact-form {
+  input,
+  textarea {
+    margin-bottom: .5rem;
+    font: inherit;
+    width: 92%;
+
+    &:required+span::after {
+      content: ' *';
+      color: red;
+      vertical-align: top;
+    }
+
+    &:not(:placeholder-shown):valid {
+      background-color: #f4feee;
+    }
+
+    &:not(:placeholder-shown):invalid {
+      background-color: #fff0f0;
+    }
+  }
+
+  label,
+  button {
+    display: block;
+  }
+}
+
+.js-submitted {
+  input,
+  textarea {
+    &:valid {
+      background-color: #f4feee;
+    }
+
+    &:invalid {
+      background-color: #fff0f0;
+    }
+  }
+}
+
+.hidden,
+%hidden {
+  display: none;
+}
+
+.js-hidden,
+%js-hidden {
+  html.js & {
+    @extend %hidden;
+  }
+}
