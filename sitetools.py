@@ -2,6 +2,7 @@
 
 import argparse
 import base64
+import configparser
 import pathlib
 import subprocess
 from typing import Dict, List
@@ -93,6 +94,33 @@ def decode_secrets_file(src_fpath: pathlib.Path, dst_fpath: pathlib.Path):
     write_secrets_file(secrets, dst_fpath)
 
 
+def insert_isso_config_secrets(
+    src_fpath: pathlib.Path, dst_fpath: pathlib.Path, secrets: Dict[str, str]
+):
+    """
+    Args:
+        src_fpath: Path to Isso config file (without secrets)
+        dst_fpath: Path to output Isso config file (with secrets inserted).
+        secrets: Decoded secrets dict from secrets file (see
+            :func:`read_secrets_file`).
+    """
+    config = configparser.ConfigParser()
+    config.read(src_fpath)
+
+    config["server"]["listen"] = f"http://localhost:{secrets['isso_port']}"
+    config["admin"]["password"] = secrets["isso_password"]
+
+    config["smtp"]["username"] = secrets["ses_username"]
+    config["smtp"]["password"] = secrets["ses_password"]
+    config["smtp"]["host"] = secrets["ses_host"]
+    config["smtp"]["to"] = secrets["address"]
+    config["smtp"]["from"] = f'"Isso" <{secrets["address"]}>'
+
+    with open(dst_fpath, "w") as f:
+        config.write(f)
+
+
+
 def build():
     proc = subprocess.run(
         "hugo", stdout=subprocess.PIPE, stderr=subprocess.PIPE
@@ -126,6 +154,14 @@ def get_parser() -> argparse.ArgumentParser:
         "-d", "--deploy", action="store_true",
         help="Use with build option to deploy after building"
     )
+    parser.add_argument(
+        "--isso-src", type=pathlib.Path, default="isso.cfg.nosecrets",
+        help="Path to src Isso config (without secrets or with false secrets)"
+    )
+    parser.add_argument(
+        "--isso-dst", type=pathlib.Path, default="isso.cfg",
+        help="Path to output Isso config (with secrets from secrets file)"
+    )
     return parser
 
 
@@ -156,4 +192,14 @@ if __name__ == "__main__":
     elif args.action == "decode":
         decode_secrets_file(args.secrets, args.output)
     else:
-        pass
+        build = args.action == "build"
+        deploy = (args.action == "deploy") or (build and args.deploy)
+
+        if build:
+            secrets = read_secrets_file(args.secrets)
+            decode_secrets(secrets)
+            insert_isso_config_secrets(
+                args.isso_src, args.isso_dst, secrets
+            )
+        if deploy:
+            pass
