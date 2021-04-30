@@ -4,6 +4,7 @@ import argparse
 import base64
 import configparser
 import pathlib
+import shutil
 import subprocess
 from typing import Dict, List
 
@@ -120,17 +121,41 @@ def insert_isso_config_secrets(
         config.write(f)
 
 
+def build_site(secrets_fpath):
+    """
+    TODO
+    """
+    build_dir = pathlib.Path("./public")
 
-def build():
+    if build_dir.exists():
+        # Delete if a previous build exists to ensure nothing from a previous
+        # build is inadvertently deployed/preserved.
+        shutil.rmtree(build_dir)
+
     proc = subprocess.run(
         "hugo", stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
 
-    print(proc.stdout.decode())
     if proc.returncode != 0:
-        print(proc.stderr.decode())
+        raise RuntimeError(proc.stderr.decode())
 
-    return proc.returncode
+    print(proc.stdout.decode())
+
+    # Fix invalid Last Modified date for `public` directory set by Hugo.
+    build_dir.touch()
+
+    # Update contact.php with the correct email address from secrets.
+    contact_php_fpath = pathlib.Path("public/php/contact.php")
+
+    lines = []
+    with open(contact_php_fpath, "r") as f:
+        for line in f:
+            if line.startswith("$secrets_file ="):
+                line = f"$secrets_file = '{secrets_fpath}';\n"
+            lines.append(line)
+    with open(contact_php_fpath, "w") as f:
+        f.writelines(lines)
+
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -201,5 +226,6 @@ if __name__ == "__main__":
             insert_isso_config_secrets(
                 args.isso_src, args.isso_dst, secrets
             )
+            build_site(args.secrets)
         if deploy:
             pass
