@@ -1,0 +1,17 @@
+{{ define "header" }}
+  {{ partial "page-single/variables-init.html" . }}
+  {{ partial "header.html" . }}
+{{ end }}
+
+{{ define "content" }}
+  {{ range (where .Site.RegularPages "Type" "post" | first 1) }}
+    {{ partial "page-single/content.html" . }}
+  {{ end }}
+{{ end }}
+
+{{ define "footer" }}
+  {{ partial "page-single/footer.html" . }}
+  {{ partial "page-single/variables-deinit.html" . }}
+  {{ if .Params.katex }}{{ partial "katex.html" . }}{{ end }}
+  {{ partial "footer/font-awesome-js.html" . }}
+{{ end }}

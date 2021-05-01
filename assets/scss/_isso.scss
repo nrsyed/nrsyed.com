@@ -1,0 +1,28 @@
+.isso-postbox {
+  .textarea-wrapper {
+    margin: 0 0 .3em;
+
+    &> .textarea {
+      margin: 0;
+    }
+  }
+
+  .form-wrapper > .auth-section .post-action > input {
+    border-radius: 12% !important;
+    color: #fff;
+    background-color: #1971c2 !important;
+    font-family: inherit;
+    font-size: .8em;
+    font-weight: bold;
+    line-height: 1.6em !important;
+  }
+
+  .form-wrapper > .auth-section > .input-wrapper {
+    margin: 0 .1em;
+  }
+}
+
+#isso-thread pre {
+  min-width: 100%;
+  overflow: auto;
+}

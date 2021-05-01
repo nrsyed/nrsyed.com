@@ -1,0 +1,14 @@
+.portfolio__content img {
+  border-radius: 0.3em;
+  border: .2em solid rgba(70, 70, 70, 50%);
+}
+
+img[src*="colorblind.gif"] {
+  border-radius: 50%;
+  border: none;
+}
+
+img[src*="ik.gif"] {
+  border: .1em solid rgba(27, 27, 27, 33%);
+  border-radius: 50%;
+}
