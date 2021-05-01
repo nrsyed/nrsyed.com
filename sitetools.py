@@ -121,7 +121,7 @@ def insert_isso_config_secrets(
         config.write(f)
 
 
-def build_site(secrets_fpath):
+def build_site(secrets_fpath: pathlib.Path):
     """
     TODO
     """
@@ -156,6 +156,22 @@ def build_site(secrets_fpath):
     with open(contact_php_fpath, "w") as f:
         f.writelines(lines)
 
+
+def deploy_site(deploy_dir: pathlib.Path, delete_existing: bool = False):
+    """
+    Copy the built site files (`./public/*`) to the deploy dir (e.g.,
+    `/var/www/nrsyed.com/public_html`).
+
+    Args:
+        deploy_dir: Path to the Apache site directory.
+        delete_existing: If `deploy_dir` exists, delete the entire directory
+            tree before copying files.
+    """
+    if deploy_dir_exists and delete_existing:
+        shutil.rmtree(deploy_dir)
+
+    build_dir = pathlib.Path("public")
+    shutil.copytree(build_dir, deploy_dir)
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -198,7 +214,7 @@ def validate_args(args: argparse.Namespace):
         args.action in ("encode", "decode", "deploy")
         or (args.action == "build" and args.deploy)
     ):
-        assert args.output, "Path to output file missing"
+        assert args.output, "Path to output file/directory missing"
 
 
 if __name__ == "__main__":
@@ -228,4 +244,5 @@ if __name__ == "__main__":
             )
             build_site(args.secrets)
         if deploy:
-            pass
+            raise RuntimeWarning("Will not work unless you are superuser")
+            deploy_site(args.output, delete_existing=True)
