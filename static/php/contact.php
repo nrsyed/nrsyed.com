@@ -1,5 +1,5 @@
 <?php
-require_once('Mail.php');
+require_once('/usr/share/php/Mail.php');
 
 $error = false;
 $status = 'error';
