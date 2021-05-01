@@ -1,4 +1,4 @@
-baseURL = "https://nrsyed.com/"
+baseURL = "https://nrsyed.me/"
 languageCode = "en-us"
 title = "Najam R. Syed"
 theme = "hyde-hyde"
@@ -29,9 +29,17 @@ author = "Najam R. Syed"
   url = "/about/"
   weight = 40
 
+[[menu.main]]
+  name = "Contact"
+  url = "/contact/"
+  weight = 50
+
 [params]
   description = "Engineering, programming, and technical miscellanies"
   authorimage = "img/beach.jpg"
+
+  copyright = "Najam R. Syed"
+  since = 2017
 
 [params.social]
   github = "nrsyed"
