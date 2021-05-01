@@ -1,4 +1,8 @@
 {{ "<!-- isso -->" | safeHTML }}
+<h3 id="nojs-comments">JavaScript must be enabled to view comments</h3>
+<script>
+  document.getElementById("nojs-comments").remove();
+</script>
 <script
   data-isso="/isso/"
   data-isso-id="{{ .RelPermalink }}"
