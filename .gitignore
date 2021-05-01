@@ -1,3 +1,7 @@
 public
 resources
 isso.cfg
+
+# vim files
+*.swo
+*.swp
