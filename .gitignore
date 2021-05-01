@@ -1,6 +1,7 @@
 public
 resources
 isso.cfg
+secrets.txt
 
 # vim files
 *.swo
