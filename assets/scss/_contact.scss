@@ -50,3 +50,21 @@
     @extend %hidden;
   }
 }
+
+#contact-submit {
+  background-color: #0088cc;
+  border: none;
+  border-radius: 0.25em;
+  color: #fff;
+  font-size: 1em;
+  font-weight: bold;
+  padding: 0.25em 0.4em;
+}
+
+#contact-submit:disabled {
+  background-color: #d8d8d8;
+}
+
+#contact-submit:hover:enabled {
+  background-color: #0077b3;
+}

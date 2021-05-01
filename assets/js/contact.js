@@ -26,7 +26,10 @@ function post_data(form_submission) {
 	}
 
   http.send(params);
-  form_submission.preventDefault();
+
+  // Disable button after it's been clicked.
+  let submit_button = document.getElementById("contact-submit");
+  submit_button.setAttribute("disabled", true);
 }
 
 function unlock_form() {
@@ -66,7 +69,12 @@ function main() {
   body.addEventListener("keydown", on_keydown);
 
   // Mark form as submitted on submit button click.
-  submit_button.onclick = post_data;
+  submit_button.onclick = function(e) {
+    e.preventDefault();
+    if (form.checkValidity()) {
+      post_data(e);
+    }
+  };
 }
 
 main();
