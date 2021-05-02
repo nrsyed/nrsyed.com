@@ -350,7 +350,7 @@ a2enmod proxy
 a2enmod proxy_http
 {{< / highlight >}}
 
-Then, per the instructions in [this post][34] by Dan Gheorghe Haiduc (and
+Then, per the instructions in [this post][34] by danuker (and
 referring to [this Digital Ocean tutorial][35] for additional information),
 we add the following lines to the site's Apache configuration file VirtualHost
 settings, which should be found in `/etc/apache2/sites-available/`:
@@ -431,7 +431,10 @@ function post_data(form_submission) {
 	}
 
   http.send(params);
-  form_submission.preventDefault();
+
+  // Disable button after it's been clicked.
+  let submit_button = document.getElementById("contact-submit");
+  submit_button.setAttribute("disabled", true);
 }
 {{< / highlight >}}
 
