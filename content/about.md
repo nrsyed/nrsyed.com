@@ -21,17 +21,19 @@ I briefly spent some time in an immunology research lab at the
 **[National Institute of Allergy and Infectious Diseases][3]**.
 
 On the technical front, my interests include robotic perception and
-control, autonomous systems, computer vision, deep learning, human-machine
-interaction, numerical methods, applied math, edge computing/development on
-ARM systems, and open source software. Python and C++ are my go-to languages,
-Ubuntu is my primary OS, and vim is my editor of choice. If this blog is any
-indication, though, I dabble in just about everything.
+control, autonomous systems, computer vision, deep learning,
+human&ndash;machine interaction, numerical methods, applied math, edge
+computing/development on ARM systems, and open source software. Python and C++
+are my go-to languages, Ubuntu is my primary OS, and vim is my editor of
+choice. If this blog is any indication, though, I dabble in just about
+everything.
 
-Aside from engineering, I have a thousand other passions and hobbies, and I'm
-always collecting more. A few of them include, in no particular order: physical
-fitness (in the form of lifting, running, and all things adjacent), guitar,
-writing, chess, skiing, learning foreign languages, [the art of memory][4],
-watching bad movies, and buying unfamiliar produce at the grocery store.
+Aside from tech and engineering, I have a thousand other passions and hobbies,
+and I'm always collecting more. A few of them include, in no particular order:
+physical fitness (in the form of lifting, running, and all things adjacent),
+guitar, writing, chess, skiing, learning foreign languages,
+[the art of memory][4], watching bad movies, and buying unfamiliar produce at
+the grocery store.
 
 The aim of this blog is to document what I've been working on and to share my
 thoughts&mdash;mostly for my own gratification, but if somebody else finds it
