@@ -560,7 +560,7 @@ I am not a web developer or a sysadmin (if I were, this transition probably
 would have taken one-tenth the time it did, and it probably wouldn't have felt
 like a sufficient <span style="text-decoration: line-through">ordeal</span>
 accomplishment to warrant its own blog post), but I've certainly gained some
-appreciation for those skillets and expanded my own technical toolkit in the
+appreciation for those skillsets and expanded my own technical toolkit in the
 process.
 
 
