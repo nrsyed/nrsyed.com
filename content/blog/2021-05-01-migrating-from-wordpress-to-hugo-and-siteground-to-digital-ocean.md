@@ -164,7 +164,7 @@ everything is working:
 echo "test message body" | mail -s "test subject" foo.bar@gmail.com
 {{< / highlight >}}
 
-Unfortunately, some services are more strict than others. Case in point: I was
+Unfortunately, some services are more strict than others. Case in point:
 I was able to use the above command to send email to a Yahoo address but
 attempting to send it to my GMail produced the following in
 `/var/log/mail.log`:
@@ -470,9 +470,9 @@ one Apache is using via [phpinfo][43] (on my system, it's
 ## Add KaTeX math typesetting
 
 An engineering blog isn't complete without math typesetting. I opted for
-[KaTex][47] over [MathJax][48], which I was using previously. KaTeX
+[KaTeX][47] over [MathJax][48], which I was using previously. KaTeX
 is faster and more lightweight than MathJax, even if it's not quite as
-full-featured. This involved creating a [partial for KaTex][49] to pull in the
+full-featured. This involved creating a [partial for KaTeX][49] to pull in the
 necessary JavaScript and CSS, then appending the following shortcode to the
 [default page HTML template][50]:
 
