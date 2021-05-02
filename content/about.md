@@ -29,7 +29,7 @@ choice. If this blog is any indication, though, I dabble in just about
 everything.
 
 Aside from tech and engineering, I have a thousand other passions and hobbies,
-and I'm always collecting more. A few of them include, in no particular order:
+and I'm always collecting more. A few of them include (in no particular order):
 physical fitness (in the form of lifting, running, and all things adjacent),
 guitar, writing, chess, skiing, learning foreign languages,
 [the art of memory][4], watching bad movies, and buying unfamiliar produce at
