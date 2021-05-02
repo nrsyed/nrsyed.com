@@ -86,7 +86,7 @@ Go that enables more direct control over the site's design and content. Posts
 are stored in plaintext [markdown][30] files. Because it generates a static
 site, it lacks the vulnerabilities of WordPress. It's also incredibly simple to
 work on a local copy of the site and test changes locally before making those
-changes live in the web-facing version of the site.
+changes live on the web-facing version of the site.
 
 As part of this redesign and migration, I ditched SiteGround as my host, where
 I was paying $15/month (their cheapest plan) in favor of a [Digital Ocean][31]
@@ -95,7 +95,7 @@ the server. Essentially, you pay a premium for them to handle the administrative
 stuff and provide web-based tools to manage your site. On the other hand, with
 a Digital Ocean Droplet, you have complete control over the server and you're
 responsible for all system administration. More work but much more flexibility,
-which, for someone who likes to get their hands dirty, is actually a win/win.
+which, for someone who likes to get their hands dirty, is actually a win-win.
 
 
 # Steps
@@ -123,7 +123,7 @@ format or indent code blocks correctly, nor did it generate Hugo image/figure
 shortcodes from &lt;img&gt; HTML tags, among other things. It also didn't
 split long lines, whereas I prefer text files to have a maximum line length of
 80 characters. To fix/format the markdown files to my liking, I wrote a hacky
-but functional [Python script][4] that used [pyparsing][5] to define a
+but functional [Python script][4] that leveraged [pyparsing][5] to define a
 [context-free grammar][6], lex/parse the markdown files into tokens, fix
 incorrectly formatted tokens, and enforce an 80-character max line length
 (making exceptions for certain tokens, e.g., URLs or lines of code, even if
@@ -164,7 +164,7 @@ everything is working:
 echo "test message body" | mail -s "test subject" foo.bar@gmail.com
 {{< / highlight >}}
 
-Unfortunately, some services are more strict than others. Case in point: I was
+Unfortunately, some services are more strict than others. Case in point:
 I was able to use the above command to send email to a Yahoo address but
 attempting to send it to my GMail produced the following in
 `/var/log/mail.log`:
@@ -186,7 +186,8 @@ I tried several solutions for this issue, like [adding a domain SPF record][36]
 [Amazon AWS SES][38] (**S**imple **E**mail **S**ervice) to send emails on
 behalf of my GMail account, which I like because it doesn't involve using or
 storing my Google account credentials. AWS SES is free below a certain usage
-threshold, which, at present, more than covers my needs.
+threshold, which, at present, more than covers my needs (and even above the
+threshold, it would be, at most, pennies a day).
 
 Make an AWS account first if you don't have one, then navigate to AWS SES SMTP
 settings and make note of the **server name** and **port** choices.
@@ -349,7 +350,7 @@ a2enmod proxy
 a2enmod proxy_http
 {{< / highlight >}}
 
-Then, per the instructions in [this post][34] by Dan Gheorghe Haiduc (and
+Then, per the instructions in [this post][34] by danuker (and
 referring to [this Digital Ocean tutorial][35] for additional information),
 we add the following lines to the site's Apache configuration file VirtualHost
 settings, which should be found in `/etc/apache2/sites-available/`:
@@ -367,13 +368,13 @@ for HTTPS.
 <span id="transfer-comments" />
 ## Transfer WordPress comments to Isso database
 
-The [wordpress-to-hugo-exporter][3] tool generates an XML file from the
-WordPress blog that includes post comments. I wrote my own tools to extract
-comments from this XML output and import them into the Isso SQLite database.
-[xmlread.py][16] uses the builtin Python `xml` module to parse the XML
-structure and write out a JSON file linking posts to their corresponding
-comments. Next, I used [import_comments.py][17] to read that JSON file and
-insert the comments into the Isso SQLite database file.
+WordPress has a feature to export the contents of the site, including comments,
+as an XML file. I wrote my own tools to extract comments from this XML output
+and import them into the Isso SQLite database. [xmlread.py][16] uses the
+builtin Python `xml` module to parse the XML structure and write out a JSON
+file linking posts to their corresponding comments. Next, I used
+[import_comments.py][17] to read that JSON file and insert the comments into
+the Isso SQLite database file.
 
 After that last step, I found that code blocks in some comments didn't display
 correctly because WordPress renders them differently than Isso. To fix these
@@ -430,7 +431,10 @@ function post_data(form_submission) {
 	}
 
   http.send(params);
-  form_submission.preventDefault();
+
+  // Disable button after it's been clicked.
+  let submit_button = document.getElementById("contact-submit");
+  submit_button.setAttribute("disabled", true);
 }
 {{< / highlight >}}
 
@@ -466,9 +470,9 @@ one Apache is using via [phpinfo][43] (on my system, it's
 ## Add KaTeX math typesetting
 
 An engineering blog isn't complete without math typesetting. I opted for
-[KaTex][47] over [MathJax][48], which I was using previously. KaTeX
+[KaTeX][47] over [MathJax][48], which I was using previously. KaTeX
 is faster and more lightweight than MathJax, even if it's not quite as
-full-featured. This involved creating a [partial for KaTex][49] to pull in the
+full-featured. This involved creating a [partial for KaTeX][49] to pull in the
 necessary JavaScript and CSS, then appending the following shortcode to the
 [default page HTML template][50]:
 
@@ -510,9 +514,10 @@ One advantage of using a static site generator is that the source files can
 be version controlled and stored in a git repo on GitHub. I took a few
 precautions to avoid inadvertently pushing authentication credentials and
 to avoid putting that information in the site's web root directory. Instead,
-this information is contained in a "secrets" text file outside the web root.
-The [contact form PHP script][44], which shouldn't be directly accessible from
-the web anyway, reads the values from that file via the following logic:
+this information is contained in a "secrets" text file outside the web root
+and outside the git repo. The [contact form PHP script][44], which shouldn't
+be directly accessible from the web anyway, reads the values from that file
+via the following logic:
 
 {{< highlight php "linenos=true" >}}
 $secrets_file = '/path/to/secrets.txt';
@@ -555,7 +560,7 @@ I am not a web developer or a sysadmin (if I were, this transition probably
 would have taken one-tenth the time it did, and it probably wouldn't have felt
 like a sufficient <span style="text-decoration: line-through">ordeal</span>
 accomplishment to warrant its own blog post), but I've certainly gained some
-appreciation for those skillets and expanded my own technical toolkit in the
+appreciation for those skillsets and expanded my own technical toolkit in the
 process.
 
 
