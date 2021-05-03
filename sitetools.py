@@ -121,11 +121,24 @@ def insert_isso_config_secrets(
         config.write(f)
 
 
-def build_site(secrets_fpath: pathlib.Path):
+def build_site(secrets_fpath: pathlib.Path, hugo_args: str = None):
     """
     TODO
     """
     build_dir = pathlib.Path("./public")
+    hugo_cmd = ["hugo"]
+
+    if hugo_args:
+        hugo_args = hugo_args.strip().split()
+
+        # Check if a different build directory has been specified.
+        try:
+            option_idx = hugo_args.index("-d")
+            build_dir = pathlib.Path(hugo_args[option_idx + 1])
+        except ValueError:
+            pass
+
+        hugo_cmd.extend(hugo_args)
 
     if build_dir.exists():
         # Delete if a previous build exists to ensure nothing from a previous
@@ -133,7 +146,7 @@ def build_site(secrets_fpath: pathlib.Path):
         shutil.rmtree(build_dir)
 
     proc = subprocess.run(
-        "hugo", stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        hugo_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
 
     if proc.returncode != 0:
@@ -145,7 +158,7 @@ def build_site(secrets_fpath: pathlib.Path):
     build_dir.touch()
 
     # Update contact.php with the correct email address from secrets.
-    contact_php_fpath = pathlib.Path("public/php/contact.php")
+    contact_php_fpath = build_dir / pathlib.Path("php/contact.php")
 
     lines = []
     with open(contact_php_fpath, "r") as f:
@@ -203,6 +216,10 @@ def get_parser() -> argparse.ArgumentParser:
         "--isso-dst", type=pathlib.Path, default="isso.cfg",
         help="Path to output Isso config (with secrets from secrets file)"
     )
+    parser.add_argument(
+        "-H", "--hugo-args", type=str, default=None,
+        help="String of additional argument(s) to pass to hugo for build"
+    )
     return parser
 
 
@@ -242,7 +259,7 @@ if __name__ == "__main__":
             insert_isso_config_secrets(
                 args.isso_src, args.isso_dst, secrets
             )
-            build_site(args.secrets)
+            build_site(args.secrets, hugo_args=args.hugo_args)
         if deploy:
             raise RuntimeWarning("Will not work unless you are superuser")
             deploy_site(args.output, delete_existing=True)
