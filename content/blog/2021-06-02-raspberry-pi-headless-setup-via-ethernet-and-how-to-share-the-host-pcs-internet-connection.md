@@ -1,9 +1,9 @@
 ---
-title: Raspberry Pi headless setup via ethernet and sharing the host PC's internet connection
+title: Raspberry Pi headless setup via ethernet (and how to share the host PC's internet connection)
 author: Najam Syed
 type: post
 date: 2021-06-02T11:27:54-04:00
-url: /2021/06/02/raspberry-pi-headless-setup-via-ethernet-and-sharing-the-host-pcs-internet-connection
+url: /2021/06/02/raspberry-pi-headless-setup-via-ethernet-and-how-to-share-the-host-pcs-internet-connection
 categories:
   - System Administration
 tags:
