@@ -1,10 +1,21 @@
 ---
-title: Raspberry Pi Setup
+title: Raspberry Pi headless setup via ethernet and sharing host PC's internet connection
 author: Najam Syed
 type: post
 date: 2021-06-02T11:27:54-04:00
-url: /2021/06/02/raspberry-pi-setup
-draft: true
+url: /2021/06/02/raspberry-pi-headless-setup-via-ethernet-and-sharing-host-pcs-internet-connection
+categories:
+  - System Administration
+tags:
+  - raspberry pi
+  - ethernet
+  - wifi
+  - connection sharing
+  - lan
+  - ssh
+  - static ip
+  - ubuntu
+  - linux
 ---
 
 * [Introduction](#introduction)
@@ -16,31 +27,30 @@ draft: true
   - [Connect the Raspberry Pi](#connect-pi)
 * [References](#references)
 
+
+In this post, we'll learn how to:
+
+1) set up a Raspberry Pi via SSH with only a PC and ethernet cable
+2) share the PC's WiFi internet connection with the Raspberry Pi over ethernet
+
 <span id="introduction" />
 # Introduction
 
-As I write this post, I'm sitting in a hotel room with my laptop and a
+As I write this, I'm sitting in a hotel room with my laptop and a
 Raspberry Pi, which I brought along because I'm traveling for several weeks
-and I wanted some tech to play around with in my downtime. Go figure. The point
-is that I'm on hotel WiFi with captive portal authentication, no access to the
-router or router administration, and no router of my own. Nor do I have a
-standalone keyboard or HDMI cable. I only had the space and foresight to bring
-an ethernet cable.
+and wanted some tech to play around with in my downtime. I'm on hotel WiFi with
+captive portal authentication, no access to the router or router
+administration, and no router of my own. Nor do I have a standalone keyboard
+or HDMI cable. I only had the space and foresight to bring an ethernet cable.
 
 {{< figure
   src="/img/rpi_hotel.jpg" alt="The view from my hotel room"
   caption="The view from my hotel room"
 >}}
 
-To simplify things, I also wanted my Raspberry Pi to have internet access
-for downloading packages and updates without trying to figure out captive
-portal authentication on the Pi without any keyboard/mouse input or video/HDMI
-output.
-
-Thus, this post was born out of necessity. In it, we'll learn how to:
-
-- set up a Raspberry Pi via SSH with only a PC and ethernet cable
-- share the PC's WiFi internet connection with the Raspberry Pi
+To simplify things, I wanted my Raspberry Pi to have internet access without
+having to figure out captive portal authentication on the Pi. Thus, this post
+was born out of necessity.
 
 #### What you **will** need:
 
@@ -118,8 +128,8 @@ static domain_name_servers=192.168.4.1
 <span id="connection-profile" />
 ## Configure host ethernet connection profile
 
-Next, we'll set up an ethernet profile on the host PC that will allow us to
-1) SSH into the Pi via ethernet and 2) share the host's internet connection
+Next, we'll set up an ethernet profile on the host PC that will allow us to 1)
+SSH into the Pi via ethernet and 2) share the host's internet connection
 (if any) with the Pi. To do this, we'll use the NetworkManager connection
 editor, which can be started from the terminal with:
 
@@ -142,7 +152,7 @@ Select "Ethernet" from the connection type dropdown.
 In the window that opens up, go to the IPv4 Settings tab. Select "Shared
 to other computers" for Method, and add a new address with the values
 address = 192.168.4.1, netmask = 24, and gateway = 192.168.4.1. Give the
-new connection a name (I named mine "rpi"), then Save and exit.
+new connection a name (I named mine "rpi"), then save and exit.
 
 Run the following `nmcli` terminal command to ensure the system doesn't
 attempt to use the ethernet connection for internet instead of WiFi:
@@ -158,7 +168,7 @@ replacing `rpi` with whatever you named the connection.
 
 At this point, you can insert the SD card into the Raspberry Pi, connect it
 to your PC with the ethernet cable, and boot it up. Open up the PC's network
-settings and ensure the new connection is activated.
+settings and ensure the new connection profile is activated.
 
 {{< figure src="/img/rpi4.png" alt="Ubuntu network settings" >}}
 
@@ -175,6 +185,11 @@ On the Pi, permanently enable the SSH service:
 systemctl enable ssh
 systemctl start ssh
 {{< / highlight >}}
+
+Congratulations! The Raspberry Pi is now set up and ready for use. You should
+be able to access the internet from it (try running a `sudo apt update`),
+though I've found that some VPNs can interfere with LAN/ethernet connections
+and may require further configuration.
 
 
 <span id="references" />
