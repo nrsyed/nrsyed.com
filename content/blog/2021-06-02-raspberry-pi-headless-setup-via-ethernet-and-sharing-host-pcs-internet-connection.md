@@ -57,7 +57,8 @@ was born out of necessity.
 - a laptop/desktop host PC with Ubuntu 18.04 (other versions of Ubuntu may
   also work, and the instructions can probably be adapted to other flavors of
   Linux as well)
-- a Raspberry Pi (I'm using a 3B, but this should also work on other models)
+- a Raspberry Pi (I'm using a 3B, but the instructions should also work on
+  other models)
 - a power supply for the Raspberry Pi (I'm using [this 5V/3A PSU][1] from
   MakerSpot that I bought for $11 on Amazon)
 - an ethernet cable
@@ -86,8 +87,9 @@ install the version from the Snap store:
 snap install rpi-imager
 {{< / highlight >}}
 
-After installing Pi OS on your SD card, the SD card should have two partitions,
-`boot` and `rootfs`. Mount both of these.
+After you run the Imager (or use your preferred method) to install Pi OS on
+the SD card, the SD card should have two partitions, `boot` and `rootfs`.
+Mount both of these.
 
 <span id="enable-ssh" />
 ## Enable SSH for first boot
@@ -128,10 +130,10 @@ static domain_name_servers=192.168.4.1
 <span id="connection-profile" />
 ## Configure host ethernet connection profile
 
-Next, we'll set up an ethernet profile on the host PC that will allow us to 1)
-SSH into the Pi via ethernet and 2) share the host's internet connection
-(if any) with the Pi. To do this, we'll use the NetworkManager connection
-editor, which can be started from the terminal with:
+Next, we'll set up an ethernet connection profile on the host PC that will
+allow us to 1) SSH into the Pi via ethernet and 2) share the host's internet
+connection (if any) with the Pi. To do this, we'll use the NetworkManager
+connection editor, which can be started from the terminal with:
 
 {{< highlight plain >}}
 nm-connection-editor
