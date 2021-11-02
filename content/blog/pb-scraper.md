@@ -62,11 +62,14 @@ for web scraping tasks.
 
 Before we can design a scraper, we must first 1) understand how the
 website/forum is organized and 2) decide how to represent this structure
-in a SQL database.
+in a SQL database, which is where we're going to store the information
+extracted from the scraper.
 
+<span id="pb_forum_schema" />
 {{< figure
   src="/img/pb_forum_schema.png" alt="Forum structure"
   caption="Forum structure"
+  alt="Forum structure"
 >}}
 
 A ProBoards forum consists of named categories, visible on the site's homepage.
@@ -74,23 +77,50 @@ Categories are simply groups of boards. A board can have moderators,
 sub-boards (represented by the loop in the diagram above), and threads. A
 moderator is simply a user. A thread contains posts, may optionally have a
 poll, and is created by a user (the user that created a thread is usually
-the owner of the first post in the thread, but this may not be true 100% of
-the time&mdash;for instance, if the first post was deleted by a moderator).
+the first poster in the thread, but this may not be true 100% of the
+time&mdash;for instance, if the first post was deleted by a moderator).
 Regarding polls: we can see the poll options (and how many votes each option
 has received) and which users have voted in the poll, but it's not possible to
 see who voted for which option. Each post is associated with the user who made
 the post.
 
+A forum also contains various images, including post smileys (aka emojis),
+the [favicon][3], site background/style elements, and user avatars. In the
+diagram above, I've made avatars their own entity, which simply links a user to
+the image corresponding to their avatar. This isn't strictly necessary;
+rather, it's a design choice.
+
+Some forums may also have a "shoutbox" enabled. This is simply a persistent
+chatbox that appears on the homepage. Shoutbox posts are, like normal posts,
+associated with the user that made them.
+
+Breaking the site into these elements gives us a roadmap for building the
+scraper, as well as the schema for the SQL database. Each element in the
+figure above is going to be a table in the database.
 
 <span id="design" />
 # Design and architecture
 
-The figure below illustrates the scraper's architecture at a high level.
+The figure below illustrates the scraper's architecture and data flow at a
+high level.
 
 {{< figure
   src="/img/pb_scraper_diagram.png" alt="Scraper architecture"
   caption="Scraper architecture"
+  alt="Scraper architecture"
 >}}
+
+Let's start at the right and work our way leftward. I've opted to use SQLite
+for the SQL database backend, as opposed to other dialects like MySQL or
+PostgreSQL, because it's lightweight and more than sufficient for our needs.
+The SQL database schema consists of tables corresponding to the elements
+from [the figure in the previous section](#pb_forum_schema). Each of these
+tables contains numerous attributes detailed in the
+[documentation for the scraper's `database` submodule][4]. For example,
+the [Users table][5] includes the user id, age, birthdate, date registered,
+email, display name, signature, and other pieces of information that can
+be obtained from a user's profile.
+
 
 <span id="asyncio" />
 ### asyncio
@@ -122,3 +152,6 @@ necessary).
 
 [1]: https://realpython.com/async-io-python/
 [2]: https://realpython.com/python-gil/
+[3]: https://en.wikipedia.org/wiki/Favicon
+[4]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html
+[5]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.User
