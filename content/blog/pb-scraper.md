@@ -1,5 +1,5 @@
 ---
-title: ProBoards forum web scraper
+title: ProBoards forum asynchronous web scraper
 type: post
 date: 2021-10-25T23:14:31-04:00
 url: /2021/10/25/proboards-forum-web-scraper
@@ -30,31 +30,38 @@ tags:
 <span id="introduction" />
 # Introduction
 
+**Disclaimer: It's against ProBoards's terms of service to scrape content from
+a ProBoards forum. This project and blog post are purely for educational
+purposes and should not be used to scrape any ProBoards forum or website.**
+
 Although niche forums and message boards certainly still exist, they've
 largely fallen out of favor thanks to the rise of social media. This isn't
 necessarily a bad thing&mdash;I love Instagram as much as the next
 guy&mdash;but there was something almost magical about the ability of those
 old personal forums to foster a close-knit community of friends from around
-the world that "mega-forums" like Reddit can't quite capture. Part of it might
-be nostalgia from a time when both I and the internet were younger, when we
-AIMed instead of Zoomed, and when the web had this untamed Wild West
-quality in which small forums/communities felt like safe
-settlements&mdash;places to call "home" on the internet.
+the world that "mega-forums" like Reddit and real-time platforms like Discord
+can't quite capture. Part of it might be nostalgia from a time when both I
+and the internet were younger, when we AIMed instead of Zoomed, and when the
+web had this untamed Wild West quality in which small forums/communities felt
+like safe settlements&mdash;places to call "home" on the internet.
 
 Philosophical waxings and wanings aside, I was an administrator on one such
 forum, started in 2002, that was hosted by ProBoards, one of many forum hosting
 providers. ProBoards is still around today and so is that forum, even
 if it hasn't been active in years. Being the sucker for nostalgia and posterity
-that I am, I thought it would be nice to have an archived copy of the forum
-and all its content, preserving it forever.
+that I am, I felt it would be nice to have an archived copy of the forum's
+content and preserve it forever. I spoke to the founder of said forum, who
+agreed with me.
 
 Unfortunately, unlike most of its competitors, ProBoards does not provide any
-option, paid or otherwise, to export a forum. *It's also against ProBoards's
-terms of service to scrape content from a ProBoards forum. This project and
-blog post are purely for educational purposes and should not actually be used
-to scrape any ProBoards forum or website*. This is an exercise that
-demonstrates the use of several Python libraries and how they might be used
-for web scraping tasks.
+option, paid or otherwise, for exporting a forum. And, as the disclaimer above
+states, scraping a forum violates the ProBoards TOS. Thus, this project is
+merely an exercise that demonstrates the use of several Python libraries and
+how they might be used for web scraping tasks. Furthermore, ProBoards may
+update its site-rendering functionality from time to time, which could break
+the ability of any given scraping tool to extract information from a forum.
+
+With that out of the way, let's get to the meat of this post.
 
 
 <span id="database" />
@@ -67,9 +74,8 @@ extracted from the scraper.
 
 <span id="pb_forum_schema" />
 {{< figure
-  src="/img/pb_forum_schema.png" alt="Forum structure"
-  caption="Forum structure"
-  alt="Forum structure"
+  src="/img/proboards_scraper/forum_schema.png" alt="Forum structure"
+  caption="Forum structure" class="aligncenter"
 >}}
 
 A ProBoards forum consists of named categories, visible on the site's homepage.
@@ -81,8 +87,8 @@ the first poster in the thread, but this may not be true 100% of the
 time&mdash;for instance, if the first post was deleted by a moderator).
 Regarding polls: we can see the poll options (and how many votes each option
 has received) and which users have voted in the poll, but it's not possible to
-see who voted for which option. Each post is associated with the user who made
-the post.
+see who voted for which option. Each post in a thread is associated with the
+user who made the post.
 
 A forum also contains various images, including post smileys (aka emojis),
 the [favicon][3], site background/style elements, and user avatars. In the
@@ -96,7 +102,7 @@ associated with the user that made them.
 
 Breaking the site into these elements gives us a roadmap for building the
 scraper, as well as the schema for the SQL database. Each element in the
-figure above is going to be a table in the database.
+figure above will be a table in the database.
 
 <span id="design" />
 # Design and architecture
@@ -105,9 +111,8 @@ The figure below illustrates the scraper's architecture and data flow at a
 high level.
 
 {{< figure
-  src="/img/pb_scraper_diagram.png" alt="Scraper architecture"
-  caption="Scraper architecture"
-  alt="Scraper architecture"
+  src="/img/proboards_scraper/scraper_diagram.png" alt="Scraper architecture"
+  caption="Scraper architecture" class="aligncenter"
 >}}
 
 Let's start at the right and work our way leftward. I've opted to use SQLite
@@ -121,6 +126,32 @@ the [Users table][5] includes the user id, age, birthdate, date registered,
 email, display name, signature, and other pieces of information that can
 be obtained from a user's profile.
 
+{{< figure
+  src="/img/proboards_scraper/database_class.png" alt="Database class"
+  class="aligncenter"
+>}}
+
+The [`Database` class][6] serves as an interface for the SQLite database.
+It provides convenient methods for querying the database and/or inserting
+objects into the tables described above. This way, the client (user or
+calling code) never has to worry about the mechanics of interacting directly
+with the database or writing SQL queries. In fact, I also didn't have to
+worry about writing SQL queries, because I opted to use [SQLAlchemy][7], an
+[ORM][8] that maps a SQL database's schema to Python objects, thereby
+abstracting away the SQL and allowing me to write everything in pure Python.
+The `Database` class interacts with the SQL database via SQLAlchemy, and the
+client code interacts indirectly with the database via the `Database` class,
+whose methods return Python objects corresponding to items in the database.
+
+{{< figure
+  src="/img/proboards_scraper/scraper_manager_class.png"
+  alt="ScraperManager class" class="aligncenter"
+>}}
+
+{{< figure
+  src="/img/proboards_scraper/scraper_module.png"
+  alt="scraper module" class="aligncenter"
+>}}
 
 <span id="asyncio" />
 ### asyncio
@@ -155,3 +186,6 @@ necessary).
 [3]: https://en.wikipedia.org/wiki/Favicon
 [4]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html
 [5]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.User
+[6]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database
+[7]: https://www.sqlalchemy.org/
+[8]: https://en.wikipedia.org/wiki/Object%E2%80%93relational_mapping
