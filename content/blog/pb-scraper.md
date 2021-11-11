@@ -37,7 +37,7 @@ TODO: forum directory link
   * [SQLite database](#sqlite_database)
   * [Database class](#database_class)
   * [ScraperManager class](#scrapermanager_class)
-  * [`scraper` module](#scraper_module)
+  * [scraper module](#scraper_module)
 
 <span id="introduction" />
 # Introduction
@@ -78,10 +78,10 @@ That said, let's examine how we might hypothetically go about such a task.
 <span id="forum_structure" />
 # Forum structure and SQL database schema
 
-Before we can design a scraper, we must first 1) understand how the
-website/forum is organized and 2) decide how to represent this structure
+Before we can design a scraper, we must first 1) understand how a
+forum is organized and 2) decide how to represent this structure
 in a SQL database, which is where we're going to store the information
-extracted from the scraper.
+extracted by the scraper.
 
 <span id="forum_schema_img" />
 {{< figure
@@ -90,7 +90,7 @@ extracted from the scraper.
 >}}
 
 A ProBoards forum consists of named categories, visible on the forum homepage.
-Categories are simply groups of boards. A board can have moderators,
+A category is simply a group of boards. A board can have moderators,
 sub-boards (represented by the loop in the diagram above), and threads. A
 moderator is simply a user. A thread contains posts, may optionally have a
 poll, and is created by a user (the user that created a thread is usually
@@ -127,7 +127,7 @@ and 3) asynchronous programming.
 A Python process runs on a single core, and because of Python's [GIL][2]
 (global interpreter lock), even multithreaded programs can only execute one
 thread at a time (unless the program uses a library that bypasses the GIL,
-like [numpy][12]). A Python program that uses the [multiprocessing module][11]
+like numpy). A Python program that uses the [multiprocessing module][11]
 can run on multiple cores, though each process has the same limitation.
 Because a process can only execute one thread at a time, multithreading is
 suited for I/O-bound (input/output&ndash;bound) tasks, like making HTTP
@@ -135,8 +135,7 @@ requests or reading/writing files, since they are *non-blocking* (i.e., they
 involve waiting for something to finish happening, allowing the Python
 interpreter to do other things in the meantime). On the other hand,
 multiprocessing is preferable for CPU-bound tasks, which are *blocking* and
-actively require the CPU to be doing work (e.g., processing data or performing
-computations).
+actively require the CPU to be doing work (e.g., performing computations).
 
 Then there's option 3: asynchronous programming via the [asyncio module][1],
 which is single-threaded but "gives a feeling of concurrency," as the
@@ -150,23 +149,21 @@ different threads. Spawning threads also comes with overhead, which can make
 multithreading less performant than asyncio.
 
 I'm of the opinion that, in Python, one should use asyncio instead of
-multithreading whenever possible&mdash. Naturally, asyncio has its limitations
+multithreading whenever possible. Naturally, asyncio has its limitations
 and multithreading certainly has its place. However, we can get away with using
 asyncio instead of multithreading for a web scraper.
 
 Not all I/O operations are [*awaitable*][14] by default in Python's asyncio
 module. That includes making HTTP requests and reading/writing files. Luckily,
-the [aiohttp][15] and [aiofiles][16] libraries fill these gaps. Unfortunately,
-although database read/write operations fall into the same category, SQLAlchemy
+the [aiohttp][15] and [aiofiles][16] libraries, respectively, fill these gaps.
+Although database read/write operations fall into the same category, SQLAlchemy
 doesn't support asyncio at the moment. However, SQLAlchemy support for asyncio
-is [in development and currently a beta feature][17]. This is a recent
-development (as of this writing) that wasn't available when I was first
-created this project, but it doesn't really matter. The amount of time database
+is [in development and currently a beta feature][17]. This is a relatively
+recent development that wasn't available when I originally created this
+project, but it doesn't really matter. The amount of time database
 I/O takes is negligible compared to the amount of time taken by HTTP
 requests&mdash;which comprise the bulk of the scraper's work&mdash;and the
-aiohttp library already addresses that by making them awaitable and
-asyncio-compatible.
-
+aiohttp library already addresses that.
 
 <span id="architecture" />
 # Design and architecture
@@ -200,7 +197,6 @@ tables contains numerous attributes detailed in the
 the [Users table][5] includes the user id, age, birthdate, date registered,
 email, display name, signature, and other pieces of information that can
 be obtained from a user's profile.
-
 
 <span id="database_class" />
 ### Database class
@@ -255,12 +251,32 @@ database *before* it begins popping and processing items from the content
 queue.
 
 <span id="scraper_module" />
-### `scraper` module
+### scraper module
 
 {{< figure
   src="/img/proboards_scraper/scraper_module.png"
   alt="scraper module" class="aligncenter"
 >}}
+
+Lastly, there's the [scraper module][18], which is a sub-module in the
+proboards_scraper package that contains several async functions used to
+actually do the scraping (via a ScraperManager class instance to make HTTP
+requests and indirectly interact with the database, as described above). The
+scraper calls these functions as needed, and some of which recursively call
+each other. For example, the scrape_forum() function grabs shoutbox posts,
+the site favicon, and categories from the main page, then calls scrape_board()
+on each board in each category. scrape_board(), in turns, calls itself
+recursively on any sub-boards, then iterates over all pages in the board and
+calls scrape_thread() on all the threads on each page.
+
+Similarly, scrape_users() runs through each page of the member list and runs
+an async helper function named, predictably, scrape_user(), on each user
+profile.
+
+<span id="guests" />
+### Guests
+
+Guests are users who aren't actually registered.
 
 
 [1]: https://realpython.com/async-io-python/
@@ -280,3 +296,5 @@ queue.
 [15]: https://docs.aiohttp.org/en/stable/
 [16]: https://github.com/Tinche/aiofiles
 [17]: https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html
+[18]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html
+[19]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_user
