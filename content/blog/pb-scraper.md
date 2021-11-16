@@ -211,7 +211,7 @@ It provides convenient methods for querying the database and/or inserting
 objects into the tables described above. This way, the client (user or
 calling code) never has to worry about the mechanics of interacting directly
 with the database or writing SQL queries. In fact, I also didn't have to
-worry about writing SQL queries, because I used [SQLAlchemy][7], an
+worry about writing SQL queries because I used [SQLAlchemy][7], an
 [ORM][8] that maps a SQL database's schema to Python objects, thereby
 abstracting away the SQL and allowing me to write everything in pure Python.
 The Database class interacts with the SQL database via SQLAlchemy, and the
@@ -262,21 +262,49 @@ Lastly, there's the [scraper module][18], which is a sub-module in the
 proboards_scraper package that contains several async functions used to
 actually do the scraping (via a ScraperManager class instance to make HTTP
 requests and indirectly interact with the database, as described above). The
-scraper calls these functions as needed, and some of which recursively call
+scraper calls these functions as needed, some of which recursively call
 each other. For example, the scrape_forum() function grabs shoutbox posts,
 the site favicon, and categories from the main page, then calls scrape_board()
 on each board in each category. scrape_board(), in turns, calls itself
 recursively on any sub-boards, then iterates over all pages in the board and
 calls scrape_thread() on all the threads on each page.
 
-Similarly, scrape_users() runs through each page of the member list and runs
+Similarly, scrape_users() runs through each page of the member list and calls
 an async helper function named, predictably, scrape_user(), on each user
 profile.
 
 <span id="guests" />
 ### Guests
 
-Guests are users who aren't actually registered.
+Guests are users who aren't actually registered on the site, i.e., they don't
+show up in the site's member list. Not all forums allow guests to make
+posts&mdash;the forum administrators can disable guest privileges if they so
+choose. However, guests can also be deleted users. Thus, a forum may end up
+with posts made by guests regardless. Either way, the scraper needs a way to
+handle this.
+
+There are two issues: 1) guests have no user ID and 2) as mentioned in the
+[ScraperManager class section](#scrapermanager_class) above, we scrape all
+users first so that they already exist in the database when other content
+references them&mdash;however, guests don't show up in the user list and
+cannot be scraped in advance.
+
+The first issue has an easy solution: assign guests user IDs of our choosing
+for the purpose of the database. Actual users have positive integer IDs on
+a forum. Therefore, I opted to assign guests negative IDs and identify them
+by name. In other words, if guest "Bob" is encountered, they're assigned
+user ID `-1`. If guest "cindy_123" is encountered next, they're assigned user
+ID `-2`. If a guest named "Bob" is encountered again, we query the database
+User table for existing guests by that name (instead of querying by ID as we
+would a registered user), find that guest Bob already exists with ID `-1`,
+and simply use that.
+
+This also hints at how I've chosen to handle adding guests to the database:
+when a post by a guest is encountered, we have to first query the database
+for existing guests with the same name. If one already exists, use the existing
+(negative) user ID; if not, assign a new negative ID and use that. This
+requires the scraper to query the database, which is facilitated by the
+ScraperManager's [insert_guest()][20] method.
 
 
 [1]: https://realpython.com/async-io-python/
@@ -298,3 +326,4 @@ Guests are users who aren't actually registered.
 [17]: https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html
 [18]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html
 [19]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_user
+[20]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.insert_guest
