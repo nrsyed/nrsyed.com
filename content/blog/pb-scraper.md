@@ -38,6 +38,9 @@ TODO: forum directory link
   * [Database class](#database_class)
   * [ScraperManager class](#scrapermanager_class)
   * [scraper module](#scraper_module)
+  * [Guests](#guests)
+  * [Putting it all together](#architecture_overview)
+* [Implementation](#implementation)
 
 <span id="introduction" />
 # Introduction
@@ -306,6 +309,48 @@ for existing guests with the same name. If one already exists, use the existing
 requires the scraper to query the database, which is facilitated by the
 ScraperManager's [insert_guest()][20] method.
 
+The [download_image()][21] and [insert_image()][22] functions serve a similar
+purpose, allowing us to download and add a user's avatar to the database and
+reference it while scraping a user profile.
+
+<span id="architecture_summary" />
+### Putting it all together
+
+We now have a complete picture of
+
+{{< figure
+  src="/img/proboards_scraper/overall_diagram.png"
+  alt="ProBoards forum scraper"
+  class="aligncenter"
+>}}
+
+
+<span id="implementation" />
+# Implementation
+
+With the background and high-level details out of the way, let's examine the
+actual code. I won't go through all ~1400 lines of code, but will touch on
+key pieces of functionality.
+
+The project is organized as follows:
+
+{{< highlight plain >}}
+proboards_scraper/
+├── core.py
+├── database
+│   ├── database.py
+│   ├── __init__.py
+│   └── schema.py
+├── http_requests.py
+├── __init__.py
+├── __main__.py
+├── scraper
+│   ├── __init__.py
+│   ├── scrape.py
+│   └── utils.py
+└── scraper_manager.py
+{{< / highlight >}}
+
 
 [1]: https://realpython.com/async-io-python/
 [2]: https://realpython.com/python-gil/
@@ -327,3 +372,5 @@ ScraperManager's [insert_guest()][20] method.
 [18]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html
 [19]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_user
 [20]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.insert_guest
+[21]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.download_image
+[22]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.insert_image
