@@ -19,33 +19,81 @@ tags:
   - web scraping
 ---
 
-<span id="implementation" />
-# Implementation
+{{< figure
+  src="/img/proboards_scraper/overall_diagram.png"
+  alt="ProBoards forum scraper"
+  class="aligncenter"
+>}}
+
+**Code: https://github.com/nrsyed/proboards-scraper** <br>
+**Documentation: https://nrsyed.github.io/proboards-scraper** 
+
+* [Introduction](#introduction)
+* [Project structure](#structure)
+* [Creating a SQLAlchemy database session](#create_db)
+
+
+# Introduction
+
+This post covers the implementation of the web scraper and dives into
+the code. The [first post in this two-part series][0] covers the background
+and design of the scraper.
 
 With the background and high-level details out of the way, let's examine the
-actual code. I won't go through all ~1400 lines of code, but will touch on
-key pieces of functionality.
+actual code. I won't go through all ~1400 lines of code that comprise this
+project, but will touch on key pieces of functionality. Rather than discussing
+each component of the scraper individually, I'm going to take a more practical
+approach, following the sequence of events that occurs as the
+scraper runs and seeing how data flows through the program. This means we'll
+jump around from file to file or function to function, but in a manner that
+I hope will illustrate how the program's moving parts work together.
+
+<span id="structure" />
+# Project structure
 
 The project is organized as follows:
 
 {{< highlight plain >}}
 proboards_scraper/
+├── __init__.py
+├── __main__.py
 ├── core.py
+├── http_requests.py
+├── scraper_manager.py
 ├── database
 │   ├── database.py
 │   ├── __init__.py
 │   └── schema.py
-├── http_requests.py
-├── __init__.py
-├── __main__.py
-├── scraper
-│   ├── __init__.py
-│   ├── scrape.py
-│   └── utils.py
-└── scraper_manager.py
+└── scraper
+    ├── __init__.py
+    ├── scrape.py
+    └── utils.py
 {{< / highlight >}}
 
-## Creating a SQLAlchemy database session
+The `proboards_scraper` package contains two independent submodules. The
+database submodule encapsulates the Database class (defined in database.py)
+and the SQLAlchemy schema (in schema.py), which maps tables in the SQLite
+database to SQLAlchemy Python objects. The scraper submodule contains async
+functions (and their helpers) for actually scraping by parsing HTML.
+
+At the top level, the package has functions for HTTP session management and
+making HTTP requests, which reside in http_requests.py. The ScraperManager
+class is defined in scraper_manager.py. Predictably, core.py contains the
+core function that ties everything together and actually runs the scraper.
+
+Finally, the package has a command-line interface (CLI), which is defined in
+\_\_main.py\_\_. For more information on the CLI, refer to
+[the documentation][34].
+
+<span id="create_db" />
+# Creating a SQLAlchemy database session
+
+[core.py][27] run_scraper():
+
+{{< highlight python "linenos=true,linenostart=97" >}}
+    db_path = dst_dir / "forum.db"
+    db = Database(db_path)
+{{< / highlight >}}
 
 [database.py][28]
 
@@ -815,6 +863,7 @@ That's all, folks.
 
 
 
+[0]: {{< ref "pb-scraper.md" >}}
 [1]: https://realpython.com/async-io-python/
 [2]: https://realpython.com/python-gil/
 [3]: https://en.wikipedia.org/wiki/Favicon
@@ -848,3 +897,4 @@ That's all, folks.
 [31]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/database/schema.py
 [32]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper/scrape.py
 [33]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper_manager.py
+[34]: https://nrsyed.github.io/proboards-scraper

@@ -1,5 +1,5 @@
 ---
-title: Asynchronously web scraping a ProBoards forum with Python
+title: Asynchronously web scraping a ProBoards forum with Python (part 1)
 type: post
 date: 2021-10-25T23:14:31-04:00
 url: /2021/10/25/proboards-forum-web-scraper
@@ -18,8 +18,6 @@ tags:
   - SQLAlchemy
   - web scraping
 ---
-
-TODO: forum directory link
 
 {{< figure
   src="/img/proboards_scraper/overall_diagram.png"
@@ -40,7 +38,10 @@ TODO: forum directory link
   * [scraper module](#scraper_module)
   * [Guests](#guests)
   * [Putting it all together](#architecture_overview)
-* [Implementation](#implementation)
+
+*Note:* This post covers the background and design of the web scraper. The
+[next post in this two-part series][0] covers the implementation
+and code.
 
 <span id="introduction" />
 # Introduction
@@ -85,6 +86,10 @@ Before we can design a scraper, we must first 1) understand how a
 forum is organized and 2) decide how to represent this structure
 in a SQL database, which is where we're going to store the information
 extracted by the scraper.
+
+I won't provide a link to an actual ProBoards forum in this post, but there is
+a [directory of all ProBoards forums][13] you can use to look at some forums
+yourself.
 
 <span id="forum_schema_img" />
 {{< figure
@@ -196,7 +201,7 @@ our needs. A SQLite database is just a single file on disk.
 The SQL database schema consists of tables corresponding to the elements
 from [the figure in the previous section](#forum_schema_img). Each of these
 tables contains numerous attributes detailed in the
-[documentation for the scraper's `database` submodule][4]. For example,
+[documentation for the scraper's database submodule][4]. For example,
 the [Users table][5] includes the user id, age, birthdate, date registered,
 email, display name, signature, and other pieces of information that can
 be obtained from a user's profile.
@@ -325,6 +330,7 @@ We now have a complete picture of
 >}}
 
 
+[0]: {{< ref "pb-scraper2.md" >}}
 [1]: https://realpython.com/async-io-python/
 [2]: https://realpython.com/python-gil/
 [3]: https://en.wikipedia.org/wiki/Favicon
