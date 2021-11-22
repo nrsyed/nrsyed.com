@@ -325,33 +325,6 @@ We now have a complete picture of
 >}}
 
 
-<span id="implementation" />
-# Implementation
-
-With the background and high-level details out of the way, let's examine the
-actual code. I won't go through all ~1400 lines of code, but will touch on
-key pieces of functionality.
-
-The project is organized as follows:
-
-{{< highlight plain >}}
-proboards_scraper/
-├── core.py
-├── database
-│   ├── database.py
-│   ├── __init__.py
-│   └── schema.py
-├── http_requests.py
-├── __init__.py
-├── __main__.py
-├── scraper
-│   ├── __init__.py
-│   ├── scrape.py
-│   └── utils.py
-└── scraper_manager.py
-{{< / highlight >}}
-
-
 [1]: https://realpython.com/async-io-python/
 [2]: https://realpython.com/python-gil/
 [3]: https://en.wikipedia.org/wiki/Favicon
@@ -374,3 +347,14 @@ proboards_scraper/
 [20]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.insert_guest
 [21]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.download_image
 [22]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.insert_image
+[23]: https://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.ClientSession
+[24]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/http_requests.py
+[25]: https://docs.python.org/3/library/http.cookies.html#morsel-objects
+[26]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.run_scraper
+[27]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/core.py
+[28]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/database/database.py
+[29]: https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/api.html#sqlalchemy.ext.declarative.declarative_base
+[30]: https://stackoverflow.com/a/42772654
+[31]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/database/schema.py
+[32]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper/scrape.py
+[33]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper_manager.py
