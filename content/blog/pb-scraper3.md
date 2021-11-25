@@ -19,13 +19,40 @@ tags:
   - web scraping
 ---
 
-## Scraping
+# Scraping the forum
 
-[scraper module][18]
+To understand how the scraper proceeds with, well, actually scraping, let's
+use scraping user profiles as a demonstrative example and follow the flow of
+data through the program. In the last post, we saw that this starts with
+defining an async task for scraping user profiles in [run_scraper()][26]
+(in [core.py][27]), adding that task to the list of async tasks to complete,
+and running those tasks in the [asyncio event loop][37]. The relevant lines
+are shown together below:
 
-[scrape.py][32]
+{{< highlight python >}}
+    users_task = _task_wrapper(scrape_users, "both", url, manager)
 
-Let's go through the users as an example
+    ...
+
+    if users_task is not None:
+        tasks.append(users_task)
+    else:
+        manager.user_queue = None
+
+    if content_task is not None:
+        tasks.append(content_task)
+
+    database_task = manager.run()
+    tasks.append(database_task)
+
+    task_group = asyncio.gather(*tasks)
+    asyncio.get_event_loop().run_until_complete(task_group)
+{{< / highlight >}}
+
+This tells the event loop to asynchronously run [scrape_users()][38], which is
+defined in [scrape.py][32], a task for scraping content if selected (e.g.,
+[scrape_forum()][39]), and [ScraperManager.run()][10]. This is the definition
+for scrape_users():
 
 {{< highlight python "linenos=true,linenostart=225" >}}
 async def scrape_users(url: str, manager: ScraperManager) -> None:
@@ -65,6 +92,16 @@ async def scrape_users(url: str, manager: ScraperManager) -> None:
     await asyncio.wait(tasks)
 {{< / highlight >}}
 
+On line 239, we get the page source (note that ScraperManager.get_source() is
+awaitable, which means that, at this point, the event loop can suspend
+execution of this task and switch to a different task). We'll examine
+ScraperManager.get_source() later&mdash;for now, just know that it's a wrapper
+around [asyncio.ClientSession.get()][40] and fetches the HTML page source of
+a URL. The next few lines grab links to all the user profiles from the list of
+members on the current page and on all subsequent pages. Lines 252-259 create
+an async task for each user profile (by calling [scrape_user()][19] on the
+profile URL) and add them to the event loop, then wait for them to finish.
+
 
 Here are the first few lines of scrape_user():
 
@@ -89,14 +126,14 @@ async def scrape_user(url: str, manager: ScraperManager) -> None:
     source = await manager.get_source(url)
 {{< / highlight >}}
 
-This initializes the dictionary that will be used to construct a User object
-later and add the user to the database. All of the keys in this dictionary
-will serve as keyword arguments to construct to User object.
+This initializes the dictionary that will later be used to construct a
+[SQLAlchemy User object][5]. The items in this dictionary will serve as
+keyword arguments to the User constructor.
 
-We're not going to go through the entire function, as there's a lot of logic
-involved in parsing the HTML, but this snippet gives us an idea of what some
-of that scraping logic looks like (and how we search for various pieces of
-information in the HTML and add it to the `user` dict):
+We won't go through the entire function, as there's a considerable amount of
+code that parses the HTML via BeautifulSoup, but the following snippet provides
+a glimpse of what some of that code looks like. Observe how the extracted
+information is added to the `user` dictionary.
 
 {{< highlight python "linenos=true,linenostart=51" >}}
     # Get username and last online datetime.
@@ -120,18 +157,14 @@ information in the HTML and add it to the `user` dict):
                 user["last_online"] = unix_ts
 {{< / highlight >}}
 
-Notice how we need to account for corner cases, like the current user online
-
-Finally, near the end of the function, we add that dictionary to the user queue:
+Near the end of the function, we put `user` in the queue:
 
 {{< highlight python "linenos=true,linenostart=160" >}}
     await manager.user_queue.put(user)
 {{< / highlight >}}
 
-Let's jump to the ScraperManager run() function and see what happens from
-there.
-
-[scraper_manager.py][33]
+Let's jump to ScraperManager.run(), which lives in [scraper_manager.py][33],
+and see how it handles items in the user queue.
 
 {{< highlight python "linenos=true,linenostart=191" >}}
         if self.user_queue is not None:
@@ -145,19 +178,20 @@ there.
                     self.db.insert_user(user)
 {{< / highlight >}}
 
-This simply pops items (dictionaries like the one we just saw) from the queue
-and calls the Database class insert_user() method to insert them into the
-database. What does that call to insert_user() look like? We're going to jump
-back to [database.py][28] for the method definition:
+Above, we see that it pops items (dictionaries like `user`) from the queue
+and calls [Database.insert_user()][41] to insert them into the database.
+Let's jump to [database.py][28] to see how Database.insert_user() is defined:
 
 {{< highlight python "linenos=true,linenostart=460" >}}
     def insert_user(self, user_: dict, update: bool = False) -> User:
         """
         Insert a user into the database; this method wraps :meth:`insert`.
+
         Args:
             user\_: A dict containing the keyword args (attributes)
                 needed to instantiate a :class:`User` object.
             update: See :meth:`insert`.
+
         Returns:
             The inserted (or updated) :class:`User` object.
         """
@@ -167,15 +201,15 @@ back to [database.py][28] for the method definition:
         return user
 {{< / highlight >}}
 
-Here, we see that this simply wraps a more generic method named insert(),
-which accepts a table instance of any type. We instantiate a User, etc.
-
-Here's what the insert() method looks like (with its lengthy docstring
-removed for brevity):
+Database.insert_user() wraps a more generic method, [Database.insert()][42],
+which accepts a table metaclass instance of any type (e.g., Board, Thread,
+User). The definition for Database.insert() is shown below with its lengthy
+docstring removed for brevity.
 
 {{< highlight python >}}
     def insert(
-        self, obj: sqlalchemy.orm.DeclarativeMeta,
+        self,
+        obj: sqlalchemy.orm.DeclarativeMeta,
         filters: dict = None,
         update: bool = False
     ) -> Tuple[int, sqlalchemy.orm.DeclarativeMeta]:
@@ -203,10 +237,22 @@ removed for brevity):
         return inserted, ret
 {{< / highlight >}}
 
-Filters is etc.
-The method returns an "insert code" and the SQLAlchemy database
-object&mdash;in this case, a User. Although the return values aren't used
-in this case, they are in other cases. We'll see this in the next section.
+The method returns an "insert code" and the SQLAlchemy table object&mdash;i.e.,
+a User instance. In this case, ScraperManager.run(), which called
+Database.insert_user(), doesn't use the return value, but in other cases, the
+value returned by the insert method will be used. Recall the scraper
+architecture diagram, whose arrows illustrate this:
+
+{{< figure
+  src="/img/proboards_scraper/scraper_diagram.png" alt="Scraper architecture"
+  class="aligncenter"
+>}}
+
+In fact, ScraperManager.run() doesn't care about the return values at all,
+hence the single-ended arrows that point from run() to the insert methods.
+ScraperManager.insert_guest() and ScraperManager.insert_image(), on the
+other hand, do need to capture and return those values. We'll see this in
+action in the next section.
 
 # Downloading and adding images
 
@@ -626,3 +672,8 @@ That's all, folks.
 [35]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.get_login_cookies
 [36]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.get_login_session
 [37]: https://docs.python.org/3/library/asyncio-eventloop.html
+[38]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_users
+[39]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_forum
+[40]: https://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.ClientSession.get
+[41]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database.insert_user
+[42]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database.insert
