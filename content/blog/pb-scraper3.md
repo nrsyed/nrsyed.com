@@ -257,16 +257,17 @@ action in the next section.
 # Downloading and adding images
 
 Unlike other objects, images are actually downloaded to disk, and an Image
-item that references said file is inserted into the database.
-
-Continuing through the scrape_user() function from the last section, after
-getting the user avatar URL, the image is downloaded:
+item that references said file is inserted into the database. Continuing
+through scrape_user(), the function eventually grabs the URL for the user's
+avatar (profile picture), and makes an attempt to download that avatar.
 
 {{< highlight python "linenos=true,linenostart=168" >}}
     avatar_ret = await manager.download_image(avatar_url)
 {{< / highlight >}}
 
-The ScraperManager.download_image() method looks like this:
+Again, this is awaitable&mdash;the event loop can switch to another task
+while it waits for [ScraperManager.download_image()][21] to finish. Here is
+the definition for ScraperManager.download_image():
 
 {{< highlight python "linenos=true,linenostart=106" >}}
     async def download_image(self, url: str) -> dict:
@@ -284,12 +285,13 @@ The ScraperManager.download_image() method looks like this:
         return await download_image(url, self.client_session, self.image_dir)
 {{< / highlight >}}
 
-In other words, this is just a wrapper around a helper function (not part of
-the ScraperManager class) named download_image(), with the delay added in if
-the request is to a ProBoards URL. The download_image() function
-is located in [http_requests.py][24]. It returns a dictionary containing
-information on the download HTTP request and, if successful, the downloaded
-file itself. The function first initializes this dictionary with `None` values:
+It's actually a wrapper around a helper function of the same name. Don't
+worry about the if-statement and `self._delay()` for now&mdash;we'll get to
+that later. The [download_image()][43] helper function is located at the top
+level of the package and is defined in [http_requests.py][24]. It returns a
+dictionary containing information on the download HTTP request and, if
+successful, bytes representing the downloaded file itself. The function
+first initializes this dictionary with `None` values:
 
 {{< highlight python "linenos=true,linenostart=211" >}}
     ret = {
@@ -307,11 +309,15 @@ file itself. The function first initializes this dictionary with `None` values:
     }
 {{< / highlight >}}
 
-As you can see
+Note that an Image (and Avatar) is added to the database regardless of whether
+the file is successfully downloaded; the database entry serves as a record of
+the forum's reference to the image even if we don't have the image on disk.
+This usually occurs if the image's URL no longer exists, which is likely since
+some forums are decades old.
 
 The rest of the function makes an awaitable HTTP request, handles the response,
-and does some error checking, writes the downloaded image to disk (if it's
-a valid image and the file doesn't already exist), and updates/returns the
+does some error checking, writes the downloaded image to disk if it's
+a valid image and the file doesn't already exist, and updates/returns the
 dictionary.
 
 {{< highlight python "linenos=true,linenostart=1" >}}
@@ -363,26 +369,38 @@ dictionary.
         return ret
 {{< / highlight >}}
 
-Jumping back to scrape_user(), the function takes the nested dictionary from
-the returned dictionary that, not coincidentally, contains keys needed
-to instantiate a database Image object:
+When we write the file to disk, we use the MD5 hash of the image file to
+generate a unique filename and avoid collisions in case several images have
+the same (original) filename.
 
-{{< highlight python "linenos=true,linenostart=169" >}}
+Let's jump back to scrape_user() to see how the dictionary returned by
+ScraperManager.download_image() (and download_image()) is used to insert the
+image entry into the database:
+
+{{< highlight python "linenos=true,linenostart=168" >}}
+    avatar_ret = await manager.download_image(avatar_url)
     image = avatar_ret["image"]
     image["description"] = "avatar"
-{{< / highlight >}}
 
-Note that we also add a description that marks this image as an avatar.
+    # We need an image id to associate this image with a user as an avatar;
+    # thus, we must interact with the database directly to retrieve the
+    # image id (if it already exists in the database) or add then retrieve
+    # the id of the newly added image (if it doesn't already exist).
+    # NOTE: even if the image wasn't obtained successfully or is invalid, we
+    # still store an Image in the database that contains the original avatar
+    # URL (and an Avatar linking that Image to the current user).
 
-Finally, we insert the image into the database via
-ScraperManager.insert_image():
-
-{{< highlight python "linenos=true,linenostart=180" >}}
     image_id = manager.insert_image(image)
+
+    avatar = {
+        "user_id": user["id"],
+        "image_id": image_id,
+    }
+    manager.db.insert_avatar(avatar)
 {{< / highlight >}}
 
 
-## Content example: scraping a thread
+# Scraping a thread
 
 Scraping content is similar to scraping user profiles, but there are a few
 differences. Let's look at scraping a thread to see how we handle those
@@ -677,3 +695,4 @@ That's all, folks.
 [40]: https://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.ClientSession.get
 [41]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database.insert_user
 [42]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database.insert
+[43]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.download_image
