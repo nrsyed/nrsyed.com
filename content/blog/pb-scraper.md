@@ -28,20 +28,13 @@ tags:
 **Code: https://github.com/nrsyed/proboards-scraper** <br>
 **Documentation: https://nrsyed.github.io/proboards-scraper** 
 
-* [Introduction](#introduction)
-* [Forum structure and SQL database schema](#forum_structure)
-* [Using asyncio for asynchronous scraping](#asyncio)
-* [Design and architecture](#architecture)
-  * [SQLite database](#sqlite_database)
-  * [Database class](#database_class)
-  * [ScraperManager class](#scrapermanager_class)
-  * [scraper module](#scraper_module)
-  * [Guests](#guests)
-  * [Putting it all together](#architecture_overview)
-
-*Note:* This post covers the background and design of the web scraper. The
-[next post in this two-part series][0] covers the implementation
-and code.
+* Part 1: Introduction and background
+  * [Introduction](#introduction)
+  * [Forum structure and SQL database schema](#forum_structure)
+  * [Using asyncio for asynchronous scraping](#asyncio)
+  * [Design and architecture](#architecture)
+* [Part 2: Implementation (scraper initialization)][34]
+* [Part 3: Implementation (scraper internals)][35]
 
 <span id="introduction" />
 # Introduction
@@ -59,7 +52,7 @@ community of friends from around the world that "mega-forums" like Reddit and
 real-time platforms like Discord can't quite capture. Some of that
 *je ne sais quois* might be the product of nostalgia from a time when both I
 and the internet were younger, when we AIMed instead of Zoomed, when the
-web felt like an untamed wild west and small forums/communities were safe
+web felt like an untamed wild west and small forums were safe
 settlements&mdash;places to call "home" in the virtual world.
 
 Philosophical waxings and wanings aside, back in the early 2000s, I was an
@@ -69,7 +62,7 @@ that forum, even if it hasn't been active in years. I'm a sucker for nostalgia
 and felt it would be nice to archive the forum's content, preserving it
 forever. The founder and owner of that forum, a close friend of mine, agreed.
 
-Unfortunately, unlike most of its competitors, ProBoards doesn't provide the
+Unfortunately, unlike most of its competitors, ProBoards doesn't provide an
 option, paid or otherwise, for exporting a forum. And, as the disclaimer above
 states, scraping a forum violates the ProBoards TOS. Thus, this project is
 merely an exercise that demonstrates the use of several Python libraries and
@@ -287,14 +280,13 @@ profile.
 Guests are users who aren't actually registered on the site, i.e., they don't
 show up in the site's member list. Not all forums allow guests to make
 posts&mdash;the forum administrators can disable guest privileges if they so
-choose. However, guests can also be deleted users. Thus, a forum may end up
-with posts made by guests regardless. Either way, the scraper needs a way to
-handle this.
+choose. Guests can also be deleted users. In any case, the scraper needs a
+way to handle them.
 
 There are two issues: 1) guests have no user ID and 2) as mentioned in the
 [ScraperManager class section](#scrapermanager_class) above, we scrape all
 users first so that they already exist in the database when other content
-references them&mdash;however, guests don't show up in the user list and
+references them&mdash;however, guests don't show up in the member list and
 cannot be scraped in advance.
 
 The first issue has an easy solution: assign guests user IDs of our choosing
@@ -330,7 +322,6 @@ We now have a complete picture of
 >}}
 
 
-[0]: {{< ref "pb-scraper2.md" >}}
 [1]: https://realpython.com/async-io-python/
 [2]: https://realpython.com/python-gil/
 [3]: https://en.wikipedia.org/wiki/Favicon
@@ -364,3 +355,5 @@ We now have a complete picture of
 [31]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/database/schema.py
 [32]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper/scrape.py
 [33]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper_manager.py
+[34]: {{< ref "pb-scraper2.md" >}}
+[35]: {{< ref "pb-scraper3.md" >}}
