@@ -18,6 +18,10 @@ tags:
   - SQLAlchemy
   - web scraping
 ---
+
+**Code: https://github.com/nrsyed/proboards-scraper** <br>
+**Documentation: https://nrsyed.github.io/proboards-scraper** 
+
 # Scraping a user
 
 To understand how the scraper proceeds with, well, actually scraping, let's
@@ -525,8 +529,10 @@ new tab for each poll, but keeping track of them and switching between them
 adds a layer of unnecessary complexity and potential bugs. We could also create
 a new WebDriver instance for each poll, but that introduces overhead. Either
 way, this would likely not be a bottleneck and I figured the easiest solution
-was to wait for each WebDriver GET request. We won't delve into the
-scrape_poll() function. It parses HTML with BeautifulSoup like we've seen.
+was to wait for each WebDriver GET request.
+
+We won't delve into the scrape_poll() function. It parses the HTML from the
+Selenium WebDriver using BeautifulSoup like we've already seen.
 
 In the middle of scrape_thread(), we add the thread to the content queue:
 
@@ -578,6 +584,11 @@ relevant logic in ScraperManager.run():
                 insert_func(content)
 {{< / highlight >}}
 
+Note that the `"type"` key is deleted before passing it to the insert
+function because, otherwise, it would end up being passed to the table
+metaclass constructor as a keyword argument that it's not expecting, i.e.,
+the Thread constructor doesn't take a `type` argument.
+
 The rest of scrape_thread() iterates over the pages of the thread and grabs
 all the posts on each page. This is achieved with a while loop in which the
 following logic is placed at the end of the loop, whereby it finds the
@@ -600,7 +611,10 @@ occurs on the last page of a thread.
 
 # Rate limiting
 
-Let's take a closer look at the ScraperManager.get_source() method:
+Hitting a server with a lot of HTTP requests quickly can result in additional
+requests being throttled or even blocked altogether. To address this, we
+incorporate request rate-limiting into the ScraperManager. Consider the
+ScraperManager.get_source() method:
 
 {{< highlight python "linenos=true,linenostart=122" >}}
     async def get_source(self, url: str) -> bs4.BeautifulSoup:
@@ -621,8 +635,8 @@ Let's take a closer look at the ScraperManager.get_source() method:
         return await get_source(url, self.client_session)
 {{< / highlight >}}
 
-Here, we can see that this method calls a private method named
-ScraperManager.\_delay(), which looks like this:
+The method calls a private helper method named ScraperManager.\_delay(),
+defined as follows:
 
 {{< highlight python "linenos=true,linenostart=86" >}}
     async def _delay(self) -> None:
@@ -646,15 +660,25 @@ ScraperManager.\_delay(), which looks like this:
         await asyncio.sleep(delay)
 {{< / highlight >}}
 
-All that's happening here is we're waiting for a "short" amount of time (1.5 seconds by
-default) between each HTTP request, and after every `request_threshold`
-requests (15 by default), we wait for a "long" amount of time (20 seconds by
-default). There's nothing special about these numbers. They're just the result of
-experimentation.
+This causes the calling task to wait for a "short" amount of time (1.5 seconds
+by default) before making an HTTP request, except every `request_threshold`
+requests (15 by default) when the wait is longer (20 seconds by default).
+There's nothing special about these numbers and they can be adjusted
+for a given application. Note that, because this utilizes asyncio.sleep(),
+other tasks can continue to make HTTP requests (subject to the same short/long
+sleep constraints). A more aggressive alternative would be to use time.sleep(),
+which would block the thread and force all tasks to wait.
 
 # Conclusion
 
-That's all, folks.
+In the process of journeying through the internals of the scraper, we've 
+tackled asyncio, HTTP requests/sessions, and SQLAlchemy database management.
+I don't claim to be an expert in web scraping, but I like to think my
+approach to this particular scenario was logically crafted and sufficiently
+modular to generalize to other web scraping challenges. And, while the
+examination of the codebase didn't touch on every facet of functionality, I
+hope it had enough depth and breadth to be useful. Happy scraping and
+remember to scrape responsibly!
 
 [0]: {{< ref "pb-scraper.md" >}}
 [1]: https://realpython.com/async-io-python/
