@@ -1,7 +1,8 @@
 ---
 title: Asynchronously web scraping a ProBoards forum with Python (part 3)
+author: Najam Syed
 type: post
-date: 2021-10-25T23:20:31-04:00
+date: 2021-11-26T12:02:00-04:00
 url: /2021/11/26/asynchronously-web-scraping-a-proboards-forum-with-python-part-3
 categories:
   - Web Scraping
