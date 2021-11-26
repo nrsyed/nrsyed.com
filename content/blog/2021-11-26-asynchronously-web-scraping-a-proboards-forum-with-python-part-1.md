@@ -21,19 +21,18 @@ tags:
 
 {{< figure
   src="/img/proboards_scraper/overall_diagram.png"
-  alt="ProBoards forum scraper"
-  class="aligncenter"
+  alt="ProBoards forum scraper" class="aligncenter"
 >}}
 
-**Code: https://github.com/nrsyed/proboards-scraper** <br>
-**Documentation: https://nrsyed.github.io/proboards-scraper** 
+Code: https://github.com/nrsyed/proboards-scraper <br>
+Documentation: https://nrsyed.github.io/proboards-scraper
 
-* Part 1: Introduction and background
+* **Part 1: Introduction and background**
   * [Introduction](#introduction)
   * [Forum structure and SQL database schema](#forum_structure)
   * [Using asyncio for asynchronous scraping](#asyncio)
   * [Design and architecture](#architecture)
-* [Part 2: Implementation (scraper initialization)][34]
+* [Part 2: Implementation (project structure and scraper initialization)][34]
 * [Part 3: Implementation (scraper internals)][35]
 
 <span id="introduction" />
@@ -71,6 +70,9 @@ introduce changes to its platform that would break any tool designed to scrape
 its forums.
 
 That said, let's examine how we might hypothetically go about such a task.
+Part 1 (this post) lays the foundation for the scraper and its design.
+Parts 2 and 3 take a deep dive into the codebase to see how it works in
+practice.
 
 <span id="forum_structure" />
 # Forum structure and SQL database schema
@@ -81,8 +83,7 @@ in a SQL database, which is where we're going to store the information
 extracted by the scraper.
 
 I won't provide a link to an actual ProBoards forum in this post, but there is
-a [directory of all ProBoards forums][13] you can use to look at some forums
-yourself.
+a [directory of all ProBoards forums][13] you can peruse for yourself.
 
 <span id="forum_schema_img" />
 {{< figure
@@ -200,7 +201,7 @@ email, display name, signature, and other pieces of information that can
 be obtained from a user's profile.
 
 <span id="database_class" />
-### Database class
+## Database class
 
 {{< figure
   src="/img/proboards_scraper/database_class.png" alt="Database class"
@@ -355,5 +356,5 @@ We now have a complete picture of
 [31]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/database/schema.py
 [32]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper/scrape.py
 [33]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper_manager.py
-[34]: {{< ref "pb-scraper2.md" >}}
-[35]: {{< ref "pb-scraper3.md" >}}
+[34]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-2.md" >}}
+[35]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-3.md" >}}

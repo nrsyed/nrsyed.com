@@ -21,32 +21,27 @@ tags:
 
 {{< figure
   src="/img/proboards_scraper/overall_diagram.png"
-  alt="ProBoards forum scraper"
-  class="aligncenter"
+  alt="ProBoards forum scraper" class="aligncenter"
 >}}
 
 **Code: https://github.com/nrsyed/proboards-scraper** <br>
 **Documentation: https://nrsyed.github.io/proboards-scraper** 
 
-* [Introduction](#introduction)
-* [Project structure](#structure)
-* [Creating a SQLAlchemy database session](#create_db)
-* [Initializing an authenticated HTTP session](#authentication)
+* [Part 1: Introduction and background][0]
+* **Part 2: Implementation (project structure and scraper initialization)**
+  * [Project structure](#structure)
+  * [Creating a SQLAlchemy database session](#create_db)
+  * [Initializing an authenticated HTTP session](#authentication)
+* [Part 3: Implementation (scraper internals)][38]
 
-
-# Introduction
-
-This post will detail the implementation of the web scraper and dive into
-the code. The [first post in this two-part series][0] covers the background
-and design of the scraper.
-
-I won't go through all ~1400 lines of code that comprise this
-project, but will touch on key components. Rather than discuss
-each component of the scraper individually, we'll instead
-follow the sequence of events that occurs as the
-scraper runs to see how data flows through the program. This means we'll
-jump around between different files and functions, but in a manner that
-(I hope) illustrates how the program's moving parts work together.
+This post and the next will detail the implementation of the web scraper and
+dive into the code. These posts are intended to go into significantly more
+depth than the average web scraping tutorial. We won't run through every single
+one of the ~1400 lines of code in the repository but will touch on key
+components. Moreover, rather than discuss each component of the scraper
+one by one, we'll follow the flow of data through the program and through
+those components as it runs. This means we'll jump between different files and
+functions, but in a manner that illustrates how the moving parts work together.
 
 <span id="structure" />
 # Project structure
@@ -391,7 +386,7 @@ In this manner, we can kick off a variable number of tasks (depending on
 whether we're scraping content, users, or both). Now the actual scraping
 begins.
 
-[0]: {{< ref "pb-scraper.md" >}}
+[0]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-1.md" >}}
 [1]: https://realpython.com/async-io-python/
 [2]: https://realpython.com/python-gil/
 [3]: https://en.wikipedia.org/wiki/Favicon
@@ -429,3 +424,4 @@ begins.
 [35]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.get_login_cookies
 [36]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.get_login_session
 [37]: https://docs.python.org/3/library/asyncio-eventloop.html
+[38]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-3.md" >}}

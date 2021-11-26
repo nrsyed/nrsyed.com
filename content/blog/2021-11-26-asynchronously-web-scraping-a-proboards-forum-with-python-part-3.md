@@ -19,9 +19,25 @@ tags:
   - web scraping
 ---
 
+{{< figure
+  src="/img/proboards_scraper/overall_diagram.png"
+  alt="ProBoards forum scraper"
+  class="aligncenter"
+>}}
+
 **Code: https://github.com/nrsyed/proboards-scraper** <br>
 **Documentation: https://nrsyed.github.io/proboards-scraper** 
 
+* [Part 1: Introduction and background][0]
+* [Part 2: Implementation (project structure and scraper initialization)][45]
+* **Part 3: Implementation (scraper internals)**
+  * [Scraping a user](#scraping_user)
+  * [Downloading and adding images](#images)
+  * [Scraping a thread](#scraping_thread)
+  * [Rate limiting](#rate_limiting)
+  * [Conclusion](#conclusion)
+
+<span id="scraping_user" />
 # Scraping a user
 
 To understand how the scraper proceeds with, well, actually scraping, let's
@@ -257,6 +273,7 @@ ScraperManager.insert_guest() and ScraperManager.insert_image(), on the
 other hand, do need to capture and return those values. We'll see this in
 action in the next section.
 
+<span id="images" />
 # Downloading and adding images
 
 Unlike other objects, images are actually downloaded to disk, and an Image
@@ -402,6 +419,7 @@ image entry into the database:
     manager.db.insert_avatar(avatar)
 {{< / highlight >}}
 
+<span id="scraping_thread" />
 # Scraping a thread
 
 Scraping content (like a thread) is 
@@ -609,6 +627,7 @@ occurs on the last page of a thread.
             post_container = source.find("div", class_="container posts")
 {{< / highlight >}}
 
+<span id="rate_limiting" />
 # Rate limiting
 
 Hitting a server with a lot of HTTP requests quickly can result in additional
@@ -669,6 +688,7 @@ other tasks can continue to make HTTP requests (subject to the same short/long
 sleep constraints). A more aggressive alternative would be to use time.sleep(),
 which would block the thread and force all tasks to wait.
 
+<span id="conclusion" />
 # Conclusion
 
 In the process of journeying through the internals of the scraper, we've 
@@ -680,7 +700,7 @@ examination of the codebase didn't touch on every facet of functionality, I
 hope it had enough depth and breadth to be useful. Happy scraping and
 remember to scrape responsibly!
 
-[0]: {{< ref "pb-scraper.md" >}}
+[0]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-1.md" >}}
 [1]: https://realpython.com/async-io-python/
 [2]: https://realpython.com/python-gil/
 [3]: https://en.wikipedia.org/wiki/Favicon
@@ -725,3 +745,4 @@ remember to scrape responsibly!
 [42]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database.insert
 [43]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.download_image
 [44]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_thread
+[45]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-2.md" >}}
