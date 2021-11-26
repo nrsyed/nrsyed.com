@@ -1,8 +1,8 @@
 ---
 title: Asynchronously web scraping a ProBoards forum with Python (part 1)
 type: post
-date: 2021-10-25T23:14:31-04:00
-url: /2021/10/25/proboards-forum-web-scraper
+date: 2021-11-26T22:14:31-04:00
+url: /2021/11/26/asynchronously-web-scraping-a-proboards-forum-with-python-part-1
 categories:
   - Web Scraping
 tags:
@@ -24,14 +24,14 @@ tags:
   alt="ProBoards forum scraper" class="aligncenter"
 >}}
 
-Code: https://github.com/nrsyed/proboards-scraper <br>
-Documentation: https://nrsyed.github.io/proboards-scraper
+**Code: https://github.com/nrsyed/proboards-scraper** <br>
+**Documentation: https://nrsyed.github.io/proboards-scraper**
 
 * **Part 1: Introduction and background**
-  * [Introduction](#introduction)
-  * [Forum structure and SQL database schema](#forum_structure)
-  * [Using asyncio for asynchronous scraping](#asyncio)
-  * [Design and architecture](#architecture)
+  * *[Introduction](#introduction)*
+  * *[Forum structure and SQL database schema](#forum_structure)*
+  * *[Using asyncio for asynchronous scraping](#asyncio)*
+  * *[Design and architecture](#architecture)*
 * [Part 2: Implementation (project structure and scraper initialization)][34]
 * [Part 3: Implementation (scraper internals)][35]
 

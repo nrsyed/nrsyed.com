@@ -2,7 +2,7 @@
 title: Asynchronously web scraping a ProBoards forum with Python (part 3)
 type: post
 date: 2021-10-25T23:20:31-04:00
-url: /2021/10/25/proboards-forum-web-scraper-part-3
+url: /2021/11/26/asynchronously-web-scraping-a-proboards-forum-with-python-part-3
 categories:
   - Web Scraping
 tags:
@@ -31,20 +31,24 @@ tags:
 * [Part 1: Introduction and background][0]
 * [Part 2: Implementation (project structure and scraper initialization)][45]
 * **Part 3: Implementation (scraper internals)**
-  * [Scraping a user](#scraping_user)
-  * [Downloading and adding images](#images)
-  * [Scraping a thread](#scraping_thread)
-  * [Rate limiting](#rate_limiting)
-  * [Conclusion](#conclusion)
+  * *[Scraping a user](#scraping_user)*
+  * *[Downloading and adding images](#images)*
+  * *[Scraping a thread](#scraping_thread)*
+  * *[Rate limiting](#rate_limiting)*
+  * *[Conclusion](#conclusion)*
+
+This post follows from Part 2 and continues delving into the code. To
+understand how the scraper proceeds with actually scraping, we'll examine
+the manner in which users and threads are scraped. We'll follow the flow of
+data through the program, seeing how the various functions and classes
+interact.
 
 <span id="scraping_user" />
 # Scraping a user
 
-To understand how the scraper proceeds with, well, actually scraping, let's
-use scraping user profiles as a demonstrative example and follow the flow of
-data through the program. In the last post, we saw that this starts with
-defining an async task for scraping user profiles in [run_scraper()][26]
-(in [core.py][27]), adding that task to the list of async tasks to complete,
+In the last post, we saw that scraping user profiles starts with defining an
+async task for scraping user profiles in [run_scraper()][26] (located in the
+file [core.py][27]), adding that task to the list of async tasks to complete,
 and running those tasks in the [asyncio event loop][37]. The relevant lines
 are shown together below:
 
@@ -78,6 +82,7 @@ async def scrape_users(url: str, manager: ScraperManager) -> None:
     """
     Asynchronously iterate over all user profile pages and add them to the
     the ScraperManager user queue for insertion into the database.
+
     Args:
         url: Main members page URL, e.g.,
             `https://yoursite.proboards.com/members`.
@@ -130,6 +135,7 @@ async def scrape_user(url: str, manager: ScraperManager) -> None:
     Scrape a user profile and add the user to the ScraperManager's user queue
     (from which the user will be inserted into the database), as well as
     download the user's avatar and insert the image into the database.
+
     Args:
         url: User profile page URL.
         manager: ScraperManager instance.
@@ -270,15 +276,15 @@ architecture diagram, whose arrows illustrate this:
 In fact, ScraperManager.run() doesn't care about the return values at all,
 hence the single-ended arrows that point from run() to the insert methods.
 ScraperManager.insert_guest() and ScraperManager.insert_image(), on the
-other hand, do need to capture and return those values. We'll see this in
-action in the next section.
+other hand, do need to capture those values. We'll see this in the next
+section.
 
 <span id="images" />
 # Downloading and adding images
 
 Unlike other objects, images are actually downloaded to disk, and an Image
-item that references said file is inserted into the database. Continuing
-through scrape_user(), the function eventually grabs the URL for the user's
+that references said file is inserted into the database. Continuing
+through scrape_user(): that function eventually grabs the URL for the user's
 avatar (profile picture) and makes an attempt to download that avatar.
 
 {{< highlight python "linenos=true,linenostart=168" >}}
@@ -287,14 +293,16 @@ avatar (profile picture) and makes an attempt to download that avatar.
 
 Again, this is awaitable&mdash;the event loop can switch to another task
 while it waits for [ScraperManager.download_image()][21] to finish. Here is
-the definition for ScraperManager.download_image():
+its definition:
 
 {{< highlight python "linenos=true,linenostart=106" >}}
     async def download_image(self, url: str) -> dict:
         """
         Download an image to :attr:`image_dir`.
+
         Args:
             url: URL of the image to be downloaded.
+
         Returns:
             Image download status and metadata; see
             :func:`proboards_scraper.download_image`.
@@ -333,7 +341,8 @@ Note that an Image (and Avatar) is added to the database regardless of whether
 the file is successfully downloaded; the database entry serves as a record of
 the forum's reference to the image even if we don't have the image on disk.
 This usually occurs if the image's URL no longer exists, which is likely since
-some forums are decades old.
+some forums are decades old and contain numerous dead links to sites that have
+long since disappeared from the web.
 
 The rest of the function makes an awaitable HTTP request, handles the response,
 does some error checking, writes the downloaded image to disk if it's
@@ -422,13 +431,12 @@ image entry into the database:
 <span id="scraping_thread" />
 # Scraping a thread
 
-Scraping content (like a thread) is 
-Though the act of scraping content is largely similar to that of scraping
-users, it differs in a couple ways. Let's use [scrape_thread()][44] (found in
+Scraping content (like a thread) is largely similar to that of scraping
+users, but differs in a couple ways. Let's use [scrape_thread()][44] (found in
 [scrape.py][32]) to explore these differences.
 
 The function first grabs the page source as before, extracts some basic
-information about the thread (thread ID, the thread title, whether the
+information about the thread (the thread ID, the thread title, whether the
 thread is locked or stickied, etc.). Before scraping the posts, we first
 check whether the create user is a guest:
 
@@ -449,8 +457,10 @@ Instead, [ScraperManager.insert_guest()][20] is called:
     def insert_guest(self, name: str) -> int:
         """
         Insert a guest user into the database.
+
         Args:
             name: The guest's username.
+
         Returns:
             The user ID of the guest returned by
             :meth:`proboards_scraper.database.Database.insert_guest`.
@@ -542,12 +552,12 @@ Because we're just passing around and using the same Selenium session (via
 the ScraperManager's `driver` attribute), if multiple polls are being scraped
 concurrently, the WebDriver instance can load only one page at a time, and
 *all* the currently active scrape_poll() tasks would end up parsing the source
-for the same poll. Because the WebDriver is a Chrome browser, we could open a
+for the same poll. Since the WebDriver is a Chrome browser, we could open a
 new tab for each poll, but keeping track of them and switching between them
-adds a layer of unnecessary complexity and potential bugs. We could also create
-a new WebDriver instance for each poll, but that introduces overhead. Either
-way, this would likely not be a bottleneck and I figured the easiest solution
-was to wait for each WebDriver GET request.
+adds a layer of unnecessary complexity and a potential source of bugs. We
+could also create a new WebDriver instance for each poll, but that introduces
+overhead. Either way, this would likely not be a bottleneck and I figured the
+easiest solution was to wait for each WebDriver request.
 
 We won't delve into the scrape_poll() function. It parses the HTML from the
 Selenium WebDriver using BeautifulSoup like we've already seen.
@@ -602,16 +612,16 @@ relevant logic in ScraperManager.run():
                 insert_func(content)
 {{< / highlight >}}
 
-Note that the `"type"` key is deleted before passing it to the insert
-function because, otherwise, it would end up being passed to the table
-metaclass constructor as a keyword argument that it's not expecting, i.e.,
-the Thread constructor doesn't take a `type` argument.
+Note that the `"type"` key is deleted before passing the dictionary to the
+insert function because the dictionary serves as a source of keyword arguments
+for the table metaclass constructor (which doesn't expect to receive that
+keyword). In other words, the Thread constructor doesn't take a `type`
+argument.
 
 The rest of scrape_thread() iterates over the pages of the thread and grabs
-all the posts on each page. This is achieved with a while loop in which the
-following logic is placed at the end of the loop, whereby it finds the
-button for the next page and determines whether the button is disabled, which
-occurs on the last page of a thread.
+all the posts on each page. This is achieved with a while loop in which it
+finds the "next page" button on the page and determines whether the button is
+disabled (which occurs on the last page of a thread).
 
 {{< highlight python "linenos=true,linenostart=483" >}}
         # Continue to next page, if any.
@@ -630,9 +640,9 @@ occurs on the last page of a thread.
 <span id="rate_limiting" />
 # Rate limiting
 
-Hitting a server with a lot of HTTP requests quickly can result in additional
-requests being throttled or even blocked altogether. To address this, we
-incorporate request rate-limiting into the ScraperManager. Consider the
+Hitting a server with a lot of HTTP requests can result in future requests
+being throttled or blocked altogether. To address this, we incorporate request
+rate-limiting via the ScraperManager. Consider the
 ScraperManager.get_source() method:
 
 {{< highlight python "linenos=true,linenostart=122" >}}
@@ -644,8 +654,10 @@ ScraperManager.get_source() method:
         calls to :meth:`ScraperManager.get_source`. This rate-limiting is
         performed to help avoid request throttling by the server, which may
         result from a large number of requests in a short period of time.
+
         Args:
             url: URL whose page source to retrieve.
+
         Returns:
             BeautifulSoup page source object.
         """
@@ -693,12 +705,12 @@ which would block the thread and force all tasks to wait.
 
 In the process of journeying through the internals of the scraper, we've 
 tackled asyncio, HTTP requests/sessions, and SQLAlchemy database management.
-I don't claim to be an expert in web scraping, but I like to think my
+I don't claim to be an expert on web scraping, but I like to think my
 approach to this particular scenario was logically crafted and sufficiently
 modular to generalize to other web scraping challenges. And, while the
 examination of the codebase didn't touch on every facet of functionality, I
-hope it had enough depth and breadth to be useful. Happy scraping and
-remember to scrape responsibly!
+hope it had enough depth and breadth to be useful. Happy coding, and please
+scrape responsibly!
 
 [0]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-1.md" >}}
 [1]: https://realpython.com/async-io-python/

@@ -1,8 +1,8 @@
 ---
 title: Asynchronously web scraping a ProBoards forum with Python (part 2)
 type: post
-date: 2021-10-25T23:15:31-04:00
-url: /2021/10/25/proboards-forum-web-scraper-part-2
+date: 2021-11-26T22:15:31-04:00
+url: /2021/11/26/asynchronously-web-scraping-a-proboards-forum-with-python-part-2
 categories:
   - Web Scraping
 tags:
@@ -29,9 +29,9 @@ tags:
 
 * [Part 1: Introduction and background][0]
 * **Part 2: Implementation (project structure and scraper initialization)**
-  * [Project structure](#structure)
-  * [Creating a SQLAlchemy database session](#create_db)
-  * [Initializing an authenticated HTTP session](#authentication)
+  * *[Project structure](#structure)*
+  * *[Creating a SQLAlchemy database session](#create_db)*
+  * *[Initializing an authenticated HTTP session](#authentication)*
 * [Part 3: Implementation (scraper internals)][38]
 
 This post and the next will detail the implementation of the web scraper and
@@ -105,6 +105,7 @@ class Database:
         items to be inserted/updated or queried using a variety of specific
         functions that abstract away implementation details of the database
         and its schema.
+
         Args:
             db_path: Path to SQLite database file.
         """
@@ -129,11 +130,11 @@ engine under the hood to perform database operations.
 The `Base` object on line 95 is a SQLAlchemy metaclass, returned by the
 factory function [declarative_base()][29], from which all database table
 classes must inherit. In simpler terms, Base.metadata.create_all() links
-the engine to all the tables we've defined.
+the engine to the tables we've defined.
 
-Where *are* these tables defined? In [schema.py][31]. Specifically, we've
-defined a Python class for each table. For example, this is the definition
-for the Board class:
+Those tables are defined in [schema.py][31]. Specifically, we've defined a
+Python class for each table. For example, this is the definition for the
+Board class:
 
 {{< highlight python "linenos=true,linenostart=34" >}}
 class Board(Base):
@@ -177,20 +178,19 @@ class Board(Base):
 
 SQLAlchemy takes care of creating these tables (as well as the database) if
 they don't already exist. Note that the `relationship` and `association_proxy`
-attributes in the class definition above are SQLAlchemy constructs that exist
-for our convenience; they aren't actually in the SQL database schema. In the
+attributes in the class definition are SQLAlchemy constructs that exist
+for our convenience; they aren't in the actual SQL database schema. In the
 Board class, these attributes make it such that when we query the
 database for a board, the resulting Board instance will have attributes
 named `moderators`, `sub_boards`, and `threads`; these are lists of User
-objects, Board objects, and Thread objects with foreign keys that tie them
-to the Board instance. Normally, each of these would involve a separate SQL
-query, but SQLAlchemy handles this for us thanks to `relationship`.
+objects, Board objects, and Thread objects, respectively, with foreign keys
+that tie them to the Board instance. Normally, each of these would involve a
+separate SQL query, but SQLAlchemy handles this for us.
 
 <span id="authentication" />
 # Initializing an authenticated HTTP session
 
-Next, run_scraper() (in core.py) creates a Selenium WebDriver and an aiohttp
-session:
+Next, run_scraper() creates a Selenium WebDriver and an aiohttp session:
 
 {{< highlight python "linenos=true,linenostart=100" >}}
     chrome_driver = get_chrome_driver()
@@ -223,21 +223,21 @@ doesn't support asynchronous programming, which is vital for the scraper.
 Furthermore, it doesn't handle multiple simultaneous connections. In theory,
 because a Selenium WebDriver "session" is a browser, we could open multiple
 tabs, but keeping track of those tabs and switching between them adds a
-considerable amount of complexity and overhead, not to mention it
-doesn't address the original lack of async support, hence why I opted to
-use aiohttp scraping and HTTP requests, via [aiohttp.ClientSession][23].
+considerable amount of complexity and overhead. It also doesn't address the
+lack of async support, hence why I opted to use aiohttp scraping and HTTP
+requests via [aiohttp.ClientSession][23].
 
 However, there's an obstacle here. When we log in with Selenium, the login
 cookies are stored in the Selenium WebDriver session. There's no simple way
 to transfer these cookies to the aiohttp session, and the two libraries store
 cookies in different formats. We must convert them manually.
 
-All of this lives in [http_requests.py][24]. The function
-[get_login_cookies()][35] takes the Selenium WebDriver instance, as well as
-the login username/password, and returns a list of dicts, where each dict
-represents a cookie. The function [get_login_session()][36] uses these to
-construct a dict of [morsel][25] objects and add them to the aiohttp session's
-cookie jar:
+All of the aforementioned functionality lives in [http_requests.py][24]. The
+function [get_login_cookies()][35] takes the Selenium WebDriver instance, as
+well as the login username/password, and returns a list of dictionaries,
+where each dictionary represents a cookie. The function
+[get_login_session()][36] uses these to construct a dictionary of [morsel][25]
+objects and add them to the aiohttp session's cookie jar:
 
 {{< highlight python "linenos=true,linenostart=129" >}}
     session = aiohttp.ClientSession()
@@ -264,14 +264,14 @@ cookie jar:
 
 # Defining async tasks
 
-The scraper is flexible in that it can be run on either:
+The scraper is flexible in that it can be run on any of:
 
-1. The entire forum, including all users and all content (if given the URL to
+1. the entire forum, including all users and all content (if given the URL to
 the homepage)
-2. All users (if given the URL to the members page)
-3. A single user (if given the URL to a specific user profile)
-4. A single board (if given the URL to a specific board)
-5. A single thread (if given the URL to a specific thread)
+2. all users (if given the URL to the members page)
+3. a single user (if given the URL to a specific user profile)
+4. a single board (if given the URL to a specific board)
+5. a single thread (if given the URL to a specific thread)
 
 Recall the scraper's architecture, whereby the scraper module functions add
 items to either an async "users queue" or an async "content queue":
@@ -293,8 +293,7 @@ async helper function for scrape_users()), option 4 calls scrape_board(),
 and option 5 calls scrape_thread().
 
 To simplify the act of creating an async task for a given function with the
-appropriate queue, we use an async private helper function named
-\_task\_wrapper(), which looks like this:
+appropriate queue, we use a private helper function named \_task\_wrapper():
 
 {{< highlight python "linenos=true,linenostart=22" >}}
 async def _task_wrapper(
@@ -360,7 +359,7 @@ To see how this is put into practice, we return to run_scraper.py:
 {{< / highlight >}}
 
 Note how we add the async task(s) to a list. This allows us to kick off all
-tasks in the list and run the [async event loop][37] until all tasks have
+tasks in the list and run the [asyncio event loop][37] until all tasks have
 completed, as in this block of code at the end of run_scraper(), where we
 also add ScraperManager.run() and call it `database_task`, since it pops
 items from the queues and calls the appropriate Database instance methods
