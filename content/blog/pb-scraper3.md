@@ -18,8 +18,7 @@ tags:
   - SQLAlchemy
   - web scraping
 ---
-
-# Scraping the forum
+# Scraping a user
 
 To understand how the scraper proceeds with, well, actually scraping, let's
 use scraping user profiles as a demonstrative example and follow the flow of
@@ -259,7 +258,7 @@ action in the next section.
 Unlike other objects, images are actually downloaded to disk, and an Image
 item that references said file is inserted into the database. Continuing
 through scrape_user(), the function eventually grabs the URL for the user's
-avatar (profile picture), and makes an attempt to download that avatar.
+avatar (profile picture) and makes an attempt to download that avatar.
 
 {{< highlight python "linenos=true,linenostart=168" >}}
     avatar_ret = await manager.download_image(avatar_url)
@@ -399,18 +398,17 @@ image entry into the database:
     manager.db.insert_avatar(avatar)
 {{< / highlight >}}
 
-
 # Scraping a thread
 
-Scraping content is similar to scraping user profiles, but there are a few
-differences. Let's look at scraping a thread to see how we handle those
-differences.
+Scraping content (like a thread) is 
+Though the act of scraping content is largely similar to that of scraping
+users, it differs in a couple ways. Let's use [scrape_thread()][44] (found in
+[scrape.py][32]) to explore these differences.
 
-Back to [scrape.py][32] scrape_thread() function. The function first grabs the
-page source as before, scrapes some basic information about the thread (thread
-ID, the thread title, whether the thread is locked or stickied, the create
-user ID, etc.). Before
-proceeding with posts, we first check whether the create user is a guest:
+The function first grabs the page source as before, extracts some basic
+information about the thread (thread ID, the thread title, whether the
+thread is locked or stickied, etc.). Before scraping the posts, we first
+check whether the create user is a guest:
 
 {{< highlight python "linenos=true,linenostart=378" >}}
     # If the create user id is 0, it means the user who created the thread
@@ -422,9 +420,8 @@ proceeding with posts, we first check whether the create user is a guest:
         user_id = manager.insert_guest(guest_user_name)
 {{< / highlight >}}
 
-This is one of the exceptions where we bypass the content queue and etc.
-Let's look at the code for the insert_guest() method in the ScraperManager
-class:
+Like adding an image, adding a guest deviates from the async queue workflow.
+Instead, [ScraperManager.insert_guest()][20] is called:
 
 {{< highlight python "linenos=true,linenostart=141" >}}
     def insert_guest(self, name: str) -> int:
@@ -447,10 +444,10 @@ class:
         return guest_id
 {{< / highlight >}}
 
-In this case, we construct a dictionary similar to that for a User (since a
-guest is a special case of user), but there's no information on the guest
-besides their name. We then call the Database class insert_guest() method,
-which looks like this (docstring removed):
+In this case, we construct a dictionary similar to that for a User, since a
+guest is a special case of user, but there's no information on the guest
+besides their name. We then call Database.insert_guest(), which looks like
+this (docstring removed):
 
 {{< highlight python >}}
     def insert_guest(self, guest_: dict) -> User:
@@ -481,15 +478,20 @@ which looks like this (docstring removed):
         return guest
 {{< / highlight >}}
 
-Here, we bla bla bla return the User instance corresponding to the (existing
-or newly added guest). As shown above, ScraperManager.insert_guest() returns
-only the integer ID from this instance to scrape_thread(), which now has a
-valid user ID that exists in the database for the create user.
+Here, we query for all users in the database with a negative ID. Of the
+results (if any), we look for one whose name matches the guest we've
+encountered. If there's a result, we set the encountered guest's user ID to
+that from the result. If there isn't a result, we find the smallest existing
+ID among the guests in the database and decrement it to generate a negative
+user ID for the new guest. After being inserted into the database, the User
+instance corresponding to the guest is returned to
+ScraperManager.insert_guest(), which then returns the user ID to
+scrape_thread().
 
-Returning now to scrape_thread(), the function next scrapes a poll (if any).
-The way ProBoards forums work, poll modal windows (the box that pops up when
-you click on a poll) are inserted into the page HTML source by JavaScript.
-This means we need to use Selenium to get load the page source if a poll is
+Jumping back to scrape_thread(), the next order of business is to scrape the
+poll associated with the thread, if there is one. The way ProBoards forums
+work, poll modal windows are inserted into the page HTML source by JavaScript.
+This means we need to use Selenium to load the page source if a poll is
 present instead of relying on the source obtained from the aiohttp session.
 
 {{< highlight python "linenos=true,linenostart=386" >}}
@@ -511,17 +513,22 @@ present instead of relying on the source obtained from the aiohttp session.
         await scrape_poll(thread_id, poll_container, voters_container, manager)
 {{< / highlight >}}
 
-Why `time.sleep()` and not `await asyncio.sleep()`? Because a Selenium
-WebDriver is effectively a single browser window; we could theoretically
-open a new tab for each URL, keep track of them, and switch between them
-as needed, or create a new WebDriver instance for each call, but this
-introduces much more complexity and overhead. I figured it was simpler to
-just wait for each URL GET request to load. Afterward we parse the HTML
-with BeautifulSoup like we've been doing.
+Why do we use `time.sleep()`, which blocks the thread, instead of
+`await asyncio.sleep()`, which would allow the event loop to schedule other
+tasks? A Selenium WebDriver session is basically a single browser window.
+Because we're just passing around and using the same Selenium session (via
+the ScraperManager's `driver` attribute), if multiple polls are being scraped
+concurrently, the WebDriver instance can load only one page at a time, and
+*all* the currently active scrape_poll() tasks would end up parsing the source
+for the same poll. Because the WebDriver is a Chrome browser, we could open a
+new tab for each poll, but keeping track of them and switching between them
+adds a layer of unnecessary complexity and potential bugs. We could also create
+a new WebDriver instance for each poll, but that introduces overhead. Either
+way, this would likely not be a bottleneck and I figured the easiest solution
+was to wait for each WebDriver GET request. We won't delve into the
+scrape_poll() function. It parses HTML with BeautifulSoup like we've seen.
 
-We won't delve into the scrape_poll() function because it doesn't really
-demonstrate anything new that we haven't seen already. In the middle of
-the scrape_thread() function, we add the thread to the content queue:
+In the middle of scrape_thread(), we add the thread to the content queue:
 
 {{< highlight python "linenos=true,linenostart=407" >}}
     thread = {
@@ -539,9 +546,9 @@ the scrape_thread() function, we add the thread to the content queue:
     await manager.content_queue.put(thread)
 {{< / highlight >}}
 
-This is similar to adding a user except there's a `"type"` key that tells
-ScraperManager.run() which Database method to call. In this case, its value
-is `"thread`". Here's how the ScraperManager uses that info:
+This is similar to adding a user to the user queue except there's a `"type"`
+key that tells ScraperManager.run() which Database method to call. Here is the
+relevant logic in ScraperManager.run():
 
 {{< highlight python "linenos=true,linenostart=201" >}}
         type_to_insert_func = {
@@ -573,7 +580,9 @@ is `"thread`". Here's how the ScraperManager uses that info:
 
 The rest of scrape_thread() iterates over the pages of the thread and grabs
 all the posts on each page. This is achieved with a while loop in which the
-following logic is placed at the end of the loop:
+following logic is placed at the end of the loop, whereby it finds the
+button for the next page and determines whether the button is disabled, which
+occurs on the last page of a thread.
 
 {{< highlight python "linenos=true,linenostart=483" >}}
         # Continue to next page, if any.
@@ -588,11 +597,6 @@ following logic is placed at the end of the loop:
             source = await manager.get_source(next_url)
             post_container = source.find("div", class_="container posts")
 {{< / highlight >}}
-
-Here, we search for a clickable button that links to the next page (if any).
-If the class attribute of the HTML tag corresponding to that button contains
-`"state-disabled"`, we set the sentinel variable `pages_remaining` to `False`,
-which terminates the loop.
 
 # Rate limiting
 
@@ -696,3 +700,4 @@ That's all, folks.
 [41]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database.insert_user
 [42]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database.insert
 [43]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.download_image
+[44]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_thread
