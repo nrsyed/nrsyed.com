@@ -7,11 +7,11 @@ url: /2021/11/26/asynchronously-web-scraping-a-proboards-forum-with-python-part-
 categories:
   - Web Scraping
 tags:
+  - aiohttp
   - asyncio
   - BeautifulSoup
   - forum
   - HTML
-  - ProBoards
   - Python
   - selenium
   - SQL
