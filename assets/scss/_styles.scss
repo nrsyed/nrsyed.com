@@ -48,7 +48,12 @@ figure.bio img {
   display: block;
   /*margin: 0 auto;*/
   width: 16rem;
+}
 
+figure.aligncenter img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Overrides _responsive.scss */
@@ -78,3 +83,4 @@ figcaption {
   margin-left: auto;
   margin-right: auto;
 }
+
