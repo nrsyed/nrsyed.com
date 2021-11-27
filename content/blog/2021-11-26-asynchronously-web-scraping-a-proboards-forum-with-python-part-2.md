@@ -33,7 +33,7 @@ tags:
   * *[Project structure](#structure)*
   * *[Creating a SQLAlchemy database session](#create_db)*
   * *[Initializing an authenticated HTTP session](#authentication)*
-* [Part 3: Implementation (scraper internals)][38]
+* [Part 3: Implementation (scraper internals)][1]
 
 This post and the next will detail the implementation of the web scraper and
 dive into the code. These posts are intended to go into significantly more
@@ -80,13 +80,13 @@ functions (and non-async helpers) for parsing HTML returned by HTTP requests.
 
 Finally, there's a command-line interface (CLI), which is defined in
 \_\_main.py\_\_. For more information on the CLI, refer to
-[the documentation][34].
+[the documentation][2].
 
 <span id="create_db" />
 # Creating a SQLAlchemy database session
 
-The scraper is initialized and kicked off by the [run_scraper()][26] function
-in [core.py][27]. First, we create an instance of the Database class by
+The scraper is initialized and kicked off by the [run_scraper()][3] function
+in [core.py][4]. First, we create an instance of the Database class by
 pointing it to the database file (named forum.db by default); if the file
 doesn't exist, it will automatically be created in the process.
 
@@ -96,7 +96,7 @@ doesn't exist, it will automatically be created in the process.
 {{< / highlight >}}
 
 To see what happens in Database.\_\_init\_\_(), let's jump to the Database
-class constructor in [database.py][28]:
+class constructor in [database.py][5]:
 
 {{< highlight python "linenos=true,linenostart=81" >}}
 class Database:
@@ -121,7 +121,7 @@ class Database:
 {{< / highlight >}}
 
 Here, we create a SQLAlchemy engine, which we then bind to a SQLAlchemy
-session. [This StackOverflow answer][30] provides a helpful definition of
+session. [This StackOverflow answer][6] provides a helpful definition of
 these terms. An "engine" is a low-level object that maintains a pool of
 connections to actually talk to the database. A "session," on the other hand,
 is a higher level object that handles the ORM functionality, i.e.,
@@ -129,11 +129,11 @@ mapping Python objects to SQL database tables/queries. A session uses an
 engine under the hood to perform database operations.
 
 The `Base` object on line 95 is a SQLAlchemy metaclass, returned by the
-factory function [declarative_base()][29], from which all database table
+factory function [declarative_base()][7], from which all database table
 classes must inherit. In simpler terms, Base.metadata.create_all() links
 the engine to the tables we've defined.
 
-Those tables are defined in [schema.py][31]. Specifically, we've defined a
+Those tables are defined in [schema.py][8]. Specifically, we've defined a
 Python class for each table. For example, this is the definition for the
 Board class:
 
@@ -226,18 +226,18 @@ because a Selenium WebDriver "session" is a browser, we could open multiple
 tabs, but keeping track of those tabs and switching between them adds a
 considerable amount of complexity and overhead. It also doesn't address the
 lack of async support, hence why I opted to use aiohttp scraping and HTTP
-requests via [aiohttp.ClientSession][23].
+requests via [aiohttp.ClientSession][9].
 
 However, there's an obstacle here. When we log in with Selenium, the login
 cookies are stored in the Selenium WebDriver session. There's no simple way
 to transfer these cookies to the aiohttp session, and the two libraries store
 cookies in different formats. We must convert them manually.
 
-All of the aforementioned functionality lives in [http_requests.py][24]. The
-function [get_login_cookies()][35] takes the Selenium WebDriver instance, as
+All of the aforementioned functionality lives in [http_requests.py][10]. The
+function [get_login_cookies()][11] takes the Selenium WebDriver instance, as
 well as the login username/password, and returns a list of dictionaries,
 where each dictionary represents a cookie. The function
-[get_login_session()][36] uses these to construct a dictionary of [morsel][25]
+[get_login_session()][12] uses these to construct a dictionary of [morsel][13]
 objects and add them to the aiohttp session's cookie jar:
 
 {{< highlight python "linenos=true,linenostart=129" >}}
@@ -360,7 +360,7 @@ To see how this is put into practice, we return to run_scraper.py:
 {{< / highlight >}}
 
 Note how we add the async task(s) to a list. This allows us to kick off all
-tasks in the list and run the [asyncio event loop][37] until all tasks have
+tasks in the list and run the [asyncio event loop][14] until all tasks have
 completed, as in this block of code at the end of run_scraper(), where we
 also add ScraperManager.run() and call it `database_task`, since it pops
 items from the queues and calls the appropriate Database instance methods
@@ -387,41 +387,17 @@ whether we're scraping content, users, or both). Now the actual scraping
 begins.
 
 [0]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-1.md" >}}
-[1]: https://realpython.com/async-io-python/
-[2]: https://realpython.com/python-gil/
-[3]: https://en.wikipedia.org/wiki/Favicon
-[4]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html
-[5]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.User
-[6]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database
-[7]: https://www.sqlalchemy.org/
-[8]: https://en.wikipedia.org/wiki/Object%E2%80%93relational_mapping
-[9]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager
-[10]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.run
-[11]: https://docs.python.org/3/library/multiprocessing.html
-[12]: https://numpy.org/
-[13]: https://www.proboards.com/forum-directory
-[14]: https://docs.python.org/3/library/asyncio-task.html#awaitables
-[15]: https://docs.aiohttp.org/en/stable/
-[16]: https://github.com/Tinche/aiofiles
-[17]: https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html
-[18]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html
-[19]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_user
-[20]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.insert_guest
-[21]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.download_image
-[22]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.insert_image
-[23]: https://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.ClientSession
-[24]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/http_requests.py
-[25]: https://docs.python.org/3/library/http.cookies.html#morsel-objects
-[26]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.run_scraper
-[27]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/core.py
-[28]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/database/database.py
-[29]: https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/api.html#sqlalchemy.ext.declarative.declarative_base
-[30]: https://stackoverflow.com/a/42772654
-[31]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/database/schema.py
-[32]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper/scrape.py
-[33]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper_manager.py
-[34]: https://nrsyed.github.io/proboards-scraper
-[35]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.get_login_cookies
-[36]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.get_login_session
-[37]: https://docs.python.org/3/library/asyncio-eventloop.html
-[38]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-3.md" >}}
+[1]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-3.md" >}}
+[2]: https://nrsyed.github.io/proboards-scraper
+[3]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.run_scraper
+[4]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/core.py
+[5]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/database/database.py
+[6]: https://stackoverflow.com/a/42772654
+[7]: https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/api.html#sqlalchemy.ext.declarative.declarative_base
+[8]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/database/schema.py
+[9]: https://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.ClientSession
+[10]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/http_requests.py
+[11]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.get_login_cookies
+[12]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.get_login_session
+[13]: https://docs.python.org/3/library/http.cookies.html#morsel-objects
+[14]: https://docs.python.org/3/library/asyncio-eventloop.html

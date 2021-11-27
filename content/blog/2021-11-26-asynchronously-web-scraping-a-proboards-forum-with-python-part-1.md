@@ -33,8 +33,8 @@ tags:
   * *[Forum structure and SQL database schema](#forum_structure)*
   * *[Using asyncio for asynchronous scraping](#asyncio)*
   * *[Design and architecture](#architecture)*
-* [Part 2: Implementation (project structure and scraper initialization)][34]
-* [Part 3: Implementation (scraper internals)][35]
+* [Part 2: Implementation (project structure and scraper initialization)][0]
+* [Part 3: Implementation (scraper internals)][1]
 
 <span id="introduction" />
 # Introduction
@@ -84,7 +84,7 @@ in a SQL database, which is where we're going to store the information
 extracted by the scraper.
 
 I won't provide a link to an actual ProBoards forum in this post, but there is
-a [directory of all ProBoards forums][13] you can peruse for yourself.
+a [directory of all ProBoards forums][2] you can peruse for yourself.
 
 <span id="forum_schema_img" />
 {{< figure
@@ -127,10 +127,10 @@ form of concurrency or parallelism is necessary to scrape the site
 efficiently. We have a few options: 1) multithreading, 2) multiprocessing,
 and 3) asynchronous programming.
 
-A Python process runs on a single core, and because of Python's [GIL][2]
+A Python process runs on a single core, and because of Python's [GIL][4]
 (global interpreter lock), even multithreaded programs can only execute one
 thread at a time (unless the program uses a library that bypasses the GIL,
-like numpy). A Python program that uses the [multiprocessing module][11]
+like numpy). A Python program that uses the [multiprocessing module][5]
 can run on multiple cores, though each process has the same limitation.
 Because a process can only execute one thread at a time, multithreading is
 suited for I/O-bound (input/output&ndash;bound) tasks, like making HTTP
@@ -140,7 +140,7 @@ interpreter to do other things in the meantime). On the other hand,
 multiprocessing is preferable for CPU-bound tasks, which are *blocking* and
 actively require the CPU to be doing work (e.g., performing computations).
 
-Then there's option 3: asynchronous programming via the [asyncio module][1],
+Then there's option 3: asynchronous programming via the [asyncio module][6],
 which is single-threaded but "gives a feeling of concurrency," as the
 aforelinked article puts it, because it allows I/O-bound tasks to run in the
 background while performing other tasks, which the Python interpreter can
@@ -156,12 +156,12 @@ multithreading whenever possible. Naturally, asyncio has its limitations
 and multithreading certainly has its place. However, we can get away with using
 asyncio instead of multithreading for a web scraper.
 
-Not all I/O operations are [*awaitable*][14] by default in Python's asyncio
+Not all I/O operations are [*awaitable*][7] by default in Python's asyncio
 module. That includes making HTTP requests and reading/writing files. Luckily,
-the [aiohttp][15] and [aiofiles][16] libraries, respectively, fill these gaps.
+the [aiohttp][8] and [aiofiles][9] libraries, respectively, fill these gaps.
 Although database read/write operations fall into the same category, SQLAlchemy
 doesn't support asyncio at the moment. However, SQLAlchemy support for asyncio
-is [in development and currently a beta feature][17]. This is a relatively
+is [in development and currently a beta feature][10]. This is a relatively
 recent development that wasn't available when I originally created this
 project, but it doesn't really matter. The amount of time database
 I/O takes is negligible compared to the amount of time taken by HTTP
@@ -196,8 +196,8 @@ our needs. A SQLite database is just a single file on disk.
 The SQL database schema consists of tables corresponding to the elements
 from [the figure in the previous section](#forum_schema_img). Each of these
 tables contains numerous attributes detailed in the
-[documentation for the scraper's database submodule][4]. For example,
-the [Users table][5] includes the user id, age, birthdate, date registered,
+[documentation for the scraper's database submodule][11]. For example,
+the [Users table][12] includes the user id, age, birthdate, date registered,
 email, display name, signature, and other pieces of information that can
 be obtained from a user's profile.
 
@@ -209,13 +209,13 @@ be obtained from a user's profile.
   class="aligncenter"
 >}}
 
-The [Database class][6] serves as an interface for the SQLite database.
+The [Database class][13] serves as an interface for the SQLite database.
 It provides convenient methods for querying the database and/or inserting
 objects into the tables described above. This way, the client (user or
 calling code) never has to worry about the mechanics of interacting directly
 with the database or writing SQL queries. In fact, I also didn't have to
-worry about writing SQL queries because I used [SQLAlchemy][7], an
-[ORM][8] that maps a SQL database's schema to Python objects, thereby
+worry about writing SQL queries because I used [SQLAlchemy][14], an
+[ORM][15] that maps a SQL database's schema to Python objects, thereby
 abstracting away the SQL and allowing me to write everything in pure Python.
 The Database class interacts with the SQL database via SQLAlchemy, and the
 client code interacts indirectly with the database via the Database class,
@@ -229,7 +229,7 @@ whose methods return Python objects corresponding to items in the database.
   alt="ScraperManager class" class="aligncenter"
 >}}
 
-The [ScraperManager class][9] has a few purposes:
+The [ScraperManager class][16] has a few purposes:
 
 1. Asynchronously handles all HTTP requests and adds delays between requests
 as needed to prevent request throttling by the server.
@@ -241,7 +241,7 @@ actually parse HTML, deciding which links/pages to grab, etc.) and the
 database, determining which Database methods need to be called to insert
 items from the queues into the database.
 
-#3 is mainly handled by the [run() method][10], which continuously reads from
+#3 is mainly handled by the [run() method][17], which continuously reads from
 two queues: a "users" queue and a "content" queue. Recall from the
 [forum structure diagram](#forum_schema_img) above that many elements are
 associated with users. Therefore, it makes sense to add all the site's members
@@ -306,9 +306,9 @@ when a post by a guest is encountered, we have to first query the database
 for existing guests with the same name. If one already exists, use the existing
 (negative) user ID; if not, assign a new negative ID and use that. This
 requires the scraper to query the database, which is facilitated by the
-ScraperManager's [insert_guest()][20] method.
+ScraperManager's [insert_guest()][19] method.
 
-The [download_image()][21] and [insert_image()][22] functions serve a similar
+The [download_image()][20] and [insert_image()][21] functions serve a similar
 purpose, allowing us to download and add a user's avatar to the database and
 reference it while scraping a user profile.
 
@@ -324,38 +324,25 @@ We now have a complete picture of
 >}}
 
 
-[1]: https://realpython.com/async-io-python/
-[2]: https://realpython.com/python-gil/
+[0]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-2.md" >}}
+[1]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-3.md" >}}
+[2]: https://www.proboards.com/forum-directory
 [3]: https://en.wikipedia.org/wiki/Favicon
-[4]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html
-[5]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.User
-[6]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database
-[7]: https://www.sqlalchemy.org/
-[8]: https://en.wikipedia.org/wiki/Object%E2%80%93relational_mapping
-[9]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager
-[10]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.run
-[11]: https://docs.python.org/3/library/multiprocessing.html
-[12]: https://numpy.org/
-[13]: https://www.proboards.com/forum-directory
-[14]: https://docs.python.org/3/library/asyncio-task.html#awaitables
-[15]: https://docs.aiohttp.org/en/stable/
-[16]: https://github.com/Tinche/aiofiles
-[17]: https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html
+[4]: https://realpython.com/python-gil/
+[5]: https://docs.python.org/3/library/multiprocessing.html
+[6]: https://realpython.com/async-io-python/
+[7]: https://docs.python.org/3/library/asyncio-task.html#awaitables
+[8]: https://docs.aiohttp.org/en/stable/
+[9]: https://github.com/Tinche/aiofiles
+[10]: https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html
+[11]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html
+[12]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.User
+[13]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database
+[14]: https://www.sqlalchemy.org/
+[15]: https://en.wikipedia.org/wiki/Object%E2%80%93relational_mapping
+[16]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager
+[17]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.run
 [18]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html
-[19]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_user
-[20]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.insert_guest
-[21]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.download_image
-[22]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.insert_image
-[23]: https://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.ClientSession
-[24]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/http_requests.py
-[25]: https://docs.python.org/3/library/http.cookies.html#morsel-objects
-[26]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.run_scraper
-[27]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/core.py
-[28]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/database/database.py
-[29]: https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/api.html#sqlalchemy.ext.declarative.declarative_base
-[30]: https://stackoverflow.com/a/42772654
-[31]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/database/schema.py
-[32]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper/scrape.py
-[33]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper_manager.py
-[34]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-2.md" >}}
-[35]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-3.md" >}}
+[19]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.insert_guest
+[20]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.download_image
+[21]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.insert_image

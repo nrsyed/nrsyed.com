@@ -30,7 +30,7 @@ tags:
 **Documentation: https://nrsyed.github.io/proboards-scraper** 
 
 * [Part 1: Introduction and background][0]
-* [Part 2: Implementation (project structure and scraper initialization)][45]
+* [Part 2: Implementation (project structure and scraper initialization)][1]
 * **Part 3: Implementation (scraper internals)**
   * *[Scraping a user](#scraping_user)*
   * *[Downloading and adding images](#images)*
@@ -48,9 +48,9 @@ interact.
 # Scraping a user
 
 In the last post, we saw that scraping user profiles starts with defining an
-async task for scraping user profiles in [run_scraper()][26] (located in the
-file [core.py][27]), adding that task to the list of async tasks to complete,
-and running those tasks in the [asyncio event loop][37]. The relevant lines
+async task for scraping user profiles in [run_scraper()][2] (located in the
+file [core.py][3]), adding that task to the list of async tasks to complete,
+and running those tasks in the [asyncio event loop][4]. The relevant lines
 are shown together below:
 
 {{< highlight python >}}
@@ -73,9 +73,9 @@ are shown together below:
     asyncio.get_event_loop().run_until_complete(task_group)
 {{< / highlight >}}
 
-This tells the event loop to asynchronously run [scrape_users()][38], which is
-defined in [scrape.py][32], a task for scraping content if selected (e.g.,
-[scrape_forum()][39]), and [ScraperManager.run()][10]. This is the definition
+This tells the event loop to asynchronously run [scrape_users()][5], which is
+defined in [scrape.py][6], a task for scraping content if selected (e.g.,
+[scrape_forum()][7]), and [ScraperManager.run()][8]. This is the definition
 for scrape_users():
 
 {{< highlight python "linenos=true,linenostart=225" >}}
@@ -121,10 +121,10 @@ On line 239, we get the page source (note that ScraperManager.get_source() is
 awaitable, which means that, at this point, the event loop can suspend
 execution of this task and switch to a different task). We'll examine
 ScraperManager.get_source() later&mdash;for now, just know that it's a wrapper
-around [asyncio.ClientSession.get()][40] and fetches the HTML page source of
+around [asyncio.ClientSession.get()][9] and fetches the HTML page source of
 a URL. The next few lines grab links to all the user profiles from the list of
 members on the current page and on all subsequent pages. Lines 252-259 create
-an async task for each user profile (by calling [scrape_user()][19] on the
+an async task for each user profile (by calling [scrape_user()][10] on the
 profile URL) and add them to the event loop, then wait for them to finish.
 
 
@@ -153,7 +153,7 @@ async def scrape_user(url: str, manager: ScraperManager) -> None:
 {{< / highlight >}}
 
 This initializes the dictionary that will later be used to construct a
-[SQLAlchemy User object][5]. The items in this dictionary will serve as
+[SQLAlchemy User object][11]. The items in this dictionary will serve as
 keyword arguments to the User constructor.
 
 We won't go through the entire function, as there's a considerable amount of
@@ -189,7 +189,7 @@ Near the end of the function, we put `user` in the queue:
     await manager.user_queue.put(user)
 {{< / highlight >}}
 
-Let's jump to ScraperManager.run(), which lives in [scraper_manager.py][33],
+Let's jump to ScraperManager.run(), which lives in [scraper_manager.py][12],
 and see how it handles items in the user queue.
 
 {{< highlight python "linenos=true,linenostart=191" >}}
@@ -205,8 +205,8 @@ and see how it handles items in the user queue.
 {{< / highlight >}}
 
 Above, we see that it pops items (dictionaries like `user`) from the queue
-and calls [Database.insert_user()][41] to insert them into the database.
-Let's jump to [database.py][28] to see how Database.insert_user() is defined:
+and calls [Database.insert_user()][13] to insert them into the database.
+Let's jump to [database.py][14] to see how Database.insert_user() is defined:
 
 {{< highlight python "linenos=true,linenostart=460" >}}
     def insert_user(self, user_: dict, update: bool = False) -> User:
@@ -227,7 +227,7 @@ Let's jump to [database.py][28] to see how Database.insert_user() is defined:
         return user
 {{< / highlight >}}
 
-Database.insert_user() wraps a more generic method, [Database.insert()][42],
+Database.insert_user() wraps a more generic method, [Database.insert()][15],
 which accepts a table metaclass instance of any type (e.g., Board, Thread,
 User). The definition for Database.insert() is shown below with its lengthy
 docstring removed for brevity.
@@ -293,7 +293,7 @@ avatar (profile picture) and makes an attempt to download that avatar.
 {{< / highlight >}}
 
 Again, this is awaitable&mdash;the event loop can switch to another task
-while it waits for [ScraperManager.download_image()][21] to finish. Here is
+while it waits for [ScraperManager.download_image()][16] to finish. Here is
 its definition:
 
 {{< highlight python "linenos=true,linenostart=106" >}}
@@ -316,8 +316,8 @@ its definition:
 
 It's actually a wrapper around a helper function of the same name. Don't
 worry about the if-statement and `self._delay()` for now&mdash;we'll get to
-that later. The [download_image()][43] helper function is located at the top
-level of the package and is defined in [http_requests.py][24]. It returns a
+that later. The [download_image()][17] helper function is located at the top
+level of the package and is defined in [http_requests.py][18]. It returns a
 dictionary containing information on the download HTTP request and, if
 successful, bytes representing the downloaded file itself. The function
 first initializes this dictionary with `None` values:
@@ -433,8 +433,8 @@ image entry into the database:
 # Scraping a thread
 
 Scraping content (like a thread) is largely similar to that of scraping
-users, but differs in a couple ways. Let's use [scrape_thread()][44] (found in
-[scrape.py][32]) to explore these differences.
+users, but differs in a couple ways. Let's use [scrape_thread()][19] (found in
+[scrape.py][6]) to explore these differences.
 
 The function first grabs the page source as before, extracts some basic
 information about the thread (the thread ID, the thread title, whether the
@@ -714,48 +714,23 @@ hope it had enough depth and breadth to be useful. Happy coding, and please
 scrape responsibly!
 
 [0]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-1.md" >}}
-[1]: https://realpython.com/async-io-python/
-[2]: https://realpython.com/python-gil/
-[3]: https://en.wikipedia.org/wiki/Favicon
-[4]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html
-[5]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.User
-[6]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database
-[7]: https://www.sqlalchemy.org/
-[8]: https://en.wikipedia.org/wiki/Object%E2%80%93relational_mapping
-[9]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager
-[10]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.run
-[11]: https://docs.python.org/3/library/multiprocessing.html
-[12]: https://numpy.org/
-[13]: https://www.proboards.com/forum-directory
-[14]: https://docs.python.org/3/library/asyncio-task.html#awaitables
-[15]: https://docs.aiohttp.org/en/stable/
-[16]: https://github.com/Tinche/aiofiles
-[17]: https://docs.sqlalchemy.org/en/14/orm/extensions/asyncio.html
-[18]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html
-[19]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_user
+[1]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-2.md" >}}
+[2]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.run_scraper
+[3]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/core.py
+[4]: https://docs.python.org/3/library/asyncio-eventloop.html
+[5]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_users
+[6]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper/scrape.py
+[7]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_forum
+[8]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.run
+[9]: https://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.ClientSession.get
+[10]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_user
+[11]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.User
+[12]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper_manager.py
+[13]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database.insert_user
+[14]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/database/database.py
+[15]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database.insert
+[16]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.download_image
+[17]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.download_image
+[18]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/http_requests.py
+[19]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_thread
 [20]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.insert_guest
-[21]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.download_image
-[22]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.ScraperManager.insert_image
-[23]: https://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.ClientSession
-[24]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/http_requests.py
-[25]: https://docs.python.org/3/library/http.cookies.html#morsel-objects
-[26]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.run_scraper
-[27]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/core.py
-[28]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/database/database.py
-[29]: https://docs.sqlalchemy.org/en/13/orm/extensions/declarative/api.html#sqlalchemy.ext.declarative.declarative_base
-[30]: https://stackoverflow.com/a/42772654
-[31]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/database/schema.py
-[32]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper/scrape.py
-[33]: https://github.com/nrsyed/proboards-scraper/blob/main/proboards_scraper/scraper_manager.py
-[34]: https://nrsyed.github.io/proboards-scraper
-[35]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.get_login_cookies
-[36]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.get_login_session
-[37]: https://docs.python.org/3/library/asyncio-eventloop.html
-[38]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_users
-[39]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_forum
-[40]: https://docs.aiohttp.org/en/stable/client_reference.html#aiohttp.ClientSession.get
-[41]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database.insert_user
-[42]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.database.html#proboards_scraper.database.Database.insert
-[43]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.html#proboards_scraper.download_image
-[44]: https://nrsyed.github.io/proboards-scraper/html/proboards_scraper.scraper.html#proboards_scraper.scraper.scrape_thread
-[45]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-2.md" >}}
