@@ -37,12 +37,12 @@ tags:
 
 This post and the next will detail the implementation of the web scraper and
 dive into the code. These posts are intended to go into significantly more
-depth than the average web scraping tutorial. We won't run through every single
-one of the ~1400 lines of code in the repository but will touch on key
-components. Moreover, rather than discuss each component of the scraper
-one by one, we'll follow the flow of data through the program and through
-those components as it runs. This means we'll jump between different files and
-functions, but in a manner that illustrates how the moving parts work together.
+depth than the average web scraping tutorial. We won't run through all ~1400
+lines of code in the repository, but will touch on key components. Moreover,
+rather than discuss each component of the scraper one by one, we'll follow
+the flow of data through the program and through those components as it runs.
+This means we'll jump between different files and functions, but in a manner
+that illustrates how the moving parts work together.
 
 <span id="structure" />
 # Project structure
@@ -383,8 +383,8 @@ for inserting those items into the database:
 {{< / highlight >}}
 
 In this manner, we can kick off a variable number of tasks (depending on
-whether we're scraping content, users, or both). Now the actual scraping
-begins.
+whether we're scraping content, users, or both). Now, the actual scraping can
+begin. This will be covered in the next post.
 
 [0]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-1.md" >}}
 [1]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-3.md" >}}

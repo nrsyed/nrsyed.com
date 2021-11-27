@@ -315,7 +315,8 @@ reference it while scraping a user profile.
 <span id="architecture_summary" />
 ### Putting it all together
 
-We now have a complete picture of
+We now have a complete picture of the scraper, its various components, and how
+they fit together. 
 
 {{< figure
   src="/img/proboards_scraper/overall_diagram.png"
@@ -323,6 +324,17 @@ We now have a complete picture of
   class="aligncenter"
 >}}
 
+Functions in the scraper call methods in a ScraperManager instance to retrieve
+the HTML page source for forum URLs, parse the returned HTML, and (with some
+exceptions) add items to the ScraperManager's async queues. The ScraperManager,
+in turn, pops items from those queues and passes them to the appropriate
+Database instance methods. Finally, the Database instance interacts with the
+SQLite database to return query results and/or insert the items into the
+database.
+
+While the details are specific to this particular problem, the guiding
+principles can be applied to a variety of scraping tasks. In the next two
+posts, we'll see how the theory in this post translates to code.
 
 [0]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-2.md" >}}
 [1]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-3.md" >}}

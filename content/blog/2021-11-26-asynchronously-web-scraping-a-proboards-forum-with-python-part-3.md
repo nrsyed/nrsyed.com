@@ -38,8 +38,7 @@ tags:
   * *[Rate limiting](#rate_limiting)*
   * *[Conclusion](#conclusion)*
 
-This post follows from Part 2 and continues delving into the code. To
-understand how the scraper proceeds with actually scraping, we'll examine
+This post follows from Part 2 and continues delving into the code, examining
 the manner in which users and threads are scraped. We'll follow the flow of
 data through the program, seeing how the various functions and classes
 interact.
@@ -704,14 +703,12 @@ which would block the thread and force all tasks to wait.
 <span id="conclusion" />
 # Conclusion
 
-In the process of journeying through the internals of the scraper, we've 
-tackled asyncio, HTTP requests/sessions, and SQLAlchemy database management.
-I don't claim to be an expert on web scraping, but I like to think my
-approach to this particular scenario was logically crafted and sufficiently
-modular to generalize to other web scraping challenges. And, while the
-examination of the codebase didn't touch on every facet of functionality, I
-hope it had enough depth and breadth to be useful. Happy coding, and please
-scrape responsibly!
+In our journey through the internals of the scraper, we've  tackled asyncio,
+HTTP requests/sessions, and SQLAlchemy database management. I don't claim to
+be an expert on web scraping, but I like to think this implementation for this
+particular scenario was logically crafted and sufficiently modular to
+generalize to other web scraping challenges. Happy coding, and please scrape
+responsibly!
 
 [0]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-1.md" >}}
 [1]: {{< ref "2021-11-26-asynchronously-web-scraping-a-proboards-forum-with-python-part-2.md" >}}
